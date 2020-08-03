@@ -88,7 +88,7 @@ class CarouselItem extends PureComponent{
     }
 
     return(
-      <TouchableOpacity onPress={() => this.state.onPressCarousel(this.state.item.waifuId, this.state.item.topVote)} style={styles.item}>
+      <TouchableOpacity onPress={() => this.state.onPressCarousel(this.state.item.waifuId)} style={styles.item}>
         <ParallaxImage
           source={{ uri: this.state.item.img }}
           containerStyle={styles.imageContainer}
@@ -268,12 +268,12 @@ export default class Home extends Component {
     }
   };
   
-  selectWaifu(item, topVote){
+  selectWaifu(item){
     // here handle carousel press
     var waifu = [this.state.weeklyPollWaifus, this.state.dailyPollWaifus].flat().filter(x => x.waifuId == item)[0]
     var poll = this.state.weeklyPollWaifus.map(x => x.waifuId).includes(item) ? this.state.weeklyPoll : this.state.dailyPoll;
     
-    this.state.navigation.navigate("VoteDetails", {waifu, topVote, poll})
+    this.state.navigation.navigate("VoteDetails", {waifu, poll})
     this.setState({card: item})
   }
   

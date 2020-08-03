@@ -56,7 +56,7 @@ export default class VoteDetails extends Component {
     }
 
     var userInfo = store.getState().user.credentials;
-    var topVote = {vote: 0, img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+    var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
     var votes = _.orderBy(props.route.params.waifu.votes, ['vote'] ,['desc']);
 
 		if(props.route.params.poll.type == "daily" && isActive){
