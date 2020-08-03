@@ -11,6 +11,9 @@ const chroma = require('chroma-js')
 import Swiper from 'react-native-swiper'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
+import pointsIcon from '../assets/images/pointsIcon.png'
+import rankCoinIcon from '../assets/images/rankCoinIcon.png'
+import statCoinIcon from '../assets/images/statCoinIcon.png'
 import {useRankCoin, useStatCoin, updateWaifuImg, getBaseStats} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
@@ -86,8 +89,8 @@ export default class CharDetails extends Component {
     WebBrowser.openBrowserAsync(this.state.waifu.link);
   };
 
-  useRankCoinFunc(){
-    useRankCoin(this.state.waifu)
+  useRankCoinFunc(rankCoin = 0, points = 0, statCoins = 0){
+    useRankCoin(this.state.waifu, rankCoin, points, statCoins)
     this.setState({ showRankCoinConf: false})
   }
 
@@ -117,6 +120,18 @@ export default class CharDetails extends Component {
 
   render(){
     const waifu = this.state.waifu;
+
+    var pointsNeededToRank = 0;
+    var statCoinsNeededToRank = 0;
+    if(waifu.rank < 4){
+      var baseStats = getBaseStats(waifu.rank + 1);
+
+      var attackNeeded = baseStats.attack - waifu.attack < 0 ? 0 : baseStats.attack - waifu.attack;
+      var defenseNeeded = baseStats.defense - waifu.defense < 0 ? 0 : baseStats.defense - waifu.defense;
+
+      statCoinsNeededToRank = attackNeeded + defenseNeeded;
+      pointsNeededToRank = (waifu.rank + 1) * 5;
+    }
 
     var displayName = waifu.name;
     if(waifu.type != 'Anime-Manga')
@@ -171,7 +186,7 @@ export default class CharDetails extends Component {
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showRankCoinConf: true})}
-                        disabled={this.state.userInfo.rankCoins <= 0 || waifu.rank >= 4}
+                        disabled={this.state.userInfo.rankCoins <= 0 || waifu.rank >= 4 || (pointsNeededToRank == 0 || statCoinsNeededToRank > this.state.userInfo.statCoins)}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
@@ -208,44 +223,49 @@ export default class CharDetails extends Component {
           visible={this.state.showRankCoinConf}
           onRequestClose={() => this.setState({showRankCoinConf: false})}
         >
-          <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={{height: 150, width: width, backgroundColor: chroma("white")}}>
-              {/* { 
-                canPointRank ? 
-                   <>
-                     <View style={{flex:1}}>
-                       <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
-                     </View>
-
-                   </>
-                 :
-                  <> */}
-                    <View style={{flex:1}}>
-                      <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
-                    </View>
-      
-                    <View style={styles.buttonRowView}>
-                      <View style={styles.buttonItem}>
-                        <Button onPress={this.useRankCoinFunc}
-                          mode={"contained"} color={chroma('aqua').hex()} 
-                          labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        >
-                          Confirm
-                        </Button>
-                      </View>
-      
-                      <View style={styles.buttonItem}>
-                        <Button mode={"contained"}
-                          onPress={() => this.setState({showRankCoinConf: false})}
-                          color={chroma('aqua').hex()}
-                          labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
-                            Cancel
-                        </Button>
-                      </View>
-                    </View>
-                   {/* </>
-              } */}
+          <View style={{flex:1, width:width, justifyContent:"center", alignItems:"center"}}>
+            <View style={{height:75, width: width, backgroundColor:chroma('black').alpha(.1), justifyContent:"center", alignItems:"center"}}>
+              <Text style={[styles.text]}>
+                Rank Up Your Waifu
+              </Text>
             </View>
+            
+            <View style={{flex:1, justifyContent:"center", alignItems:"center"}}>
+              <View style={{flexDirection:"row"}}>
+                <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={pointsIcon} />
+                <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={statCoinIcon} />
+              </View>
+              
+              <View style={{flex:1}}>
+                <View style={styles.buttonRowView}>
+                  <View style={styles.buttonItem}>
+                    <Button onPress={() => this.useRankCoinFunc(0, pointsNeededToRank, statCoinsNeededToRank)}
+                      disabled={pointsNeededToRank > this.state.userInfo.points || statCoinsNeededToRank > this.state.userInfo.statCoins}
+                      mode={"contained"} color={chroma('aqua').hex()} 
+                      labelStyle={{fontSize: 20, fontFamily: "Edo", height: 'auto'}}
+                    >
+                      Points - {pointsNeededToRank} Stat Coins - {statCoinsNeededToRank}
+                    </Button>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View style={{flex:1, justifyContent:"center", alignItems:"center"}}>
+              <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={rankCoinIcon} />
+              <View style={styles.buttonRowView}>
+                <View style={styles.buttonItem}>
+                  <Button onPress={() => this.useRankCoinFunc(1)}
+                    disabled={this.state.userInfo.rankCoins == 0}
+                    mode={"contained"} color={chroma('aqua').hex()} 
+                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                  >
+                    Use Rank Coin
+                  </Button>
+                </View>
+              </View>
+            </View>
+
           </View>
         </Modal>
       

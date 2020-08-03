@@ -56,7 +56,7 @@ export default class VoteDetails extends Component {
     }
 
     var userInfo = store.getState().user.credentials;
-    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+    var topVote = {vote: 0, img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
     var votes = _.orderBy(props.route.params.waifu.votes, ['vote'] ,['desc']);
 
 		if(props.route.params.poll.type == "daily" && isActive){
@@ -81,6 +81,7 @@ export default class VoteDetails extends Component {
     this.state = {
       isActive,
       navigation: props.navigation,
+      waifu: props.route.params.waifu,
       poll: props.route.params.poll,
       pollType: props.route.params.poll.type,
       waifu: props.route.params.waifu,
@@ -106,7 +107,7 @@ export default class VoteDetails extends Component {
       var newWaifu = [newVal.weeklyPollWaifus, newVal.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
       var newPoll = this.state.pollType == "weekly" ? newVal.poll.weekly : newVal.poll.daily;
 
-      var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+      var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
       var votes = _.orderBy(newWaifu.votes, ['vote'] ,['desc']);
       if(this.state.pollType == "daily" && newPoll.isActive){
         votes = votes.filter(x => x.husbandoId == this.state.userInfo.userId);
@@ -148,7 +149,7 @@ export default class VoteDetails extends Component {
     var updtWaifu = [store.getState().data.weeklyPollWaifus, store.getState().data.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     var updtPoll = this.state.pollType == "weekly" ? store.getState().data.poll.weekly : store.getState().data.poll.daily;
 
-    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+    var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
     var votes = _.orderBy(updtWaifu.votes, ['vote'] ,['desc']);
     if(this.state.pollType == "daily" && updtPoll.isActive){
       votes = votes.filter(x => x.husbandoId == updtUserInfo.userId);
@@ -251,39 +252,34 @@ export default class VoteDetails extends Component {
 
     var rank = 1;
     var rankColor = "#ff0000";
-    var totalVoteCount = 0;
     var nextRankMinBid = 0;
 
     switch(this.state.waifu.husbandoId){
       case "Weekly":
-        minPoints = this.state.topVote.vote != "None" ? this.state.topVote.vote : 1
+        minPoints = this.state.topVote.vote != 0 ? this.state.topVote.vote : 1
         var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)
-        if(!_.isEmpty(voteObj)){
+        if(!_.isEmpty(voteObj))
           currVote = voteObj[0].vote;
-        }
   
-        if(currVote < minPoints){
+        if(currVote < minPoints)
           minPoints = minPoints - currVote + 1
-        }
-        else{
+        else
           minPoints = 1;
-        }
 
-        totalVoteCount = this.state.waifu.votes.map(x => x.vote).reduce(function(a, b){ return a + b; }, 0)
-        if (totalVoteCount < 50){
+        if (this.state.topVote.vote < 50){
           rank = 1
           rankColor = "#835220"
-          nextRankMinBid = 50 - totalVoteCount;
+          nextRankMinBid = 50 - currVote;
         }
-        else if(totalVoteCount < 100){
+        else if(this.state.topVote.vote < 75){
           rank = 2
           rankColor = "#7b7979"
-          nextRankMinBid = 100 - totalVoteCount;
+          nextRankMinBid = 75 - currVote;
         }
-        else if(totalVoteCount < 200){
+        else if(this.state.topVote.vote < 100){
           rank = 3
           rankColor = "#b29600"
-          nextRankMinBid = 200 - totalVoteCount;
+          nextRankMinBid = 100 - currVote;
         }
         else{
           rank = 4
@@ -291,6 +287,14 @@ export default class VoteDetails extends Component {
         break;
       case "Daily":
         minPoints = 1
+        if (currVote < 25){
+          rank = 1
+          rankColor = "#835220"
+          nextRankMinBid = 50 - currVote;
+        }
+        else{
+          rank = 2
+        }
         break;
     }
 
@@ -375,11 +379,11 @@ export default class VoteDetails extends Component {
                               leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
                               rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
                               separatorWidth={0}
-                              inputStyle={{ 
+                              inputStyle={{
                                 fontFamily:"Edo",
                                 fontSize: 25,
                               }}
-                              containerStyle={{ 
+                              containerStyle={{
                                 flex:.6,
                                 width: width/2.25,
                                 backgroundColor: chroma('white').alpha(.5).hex(),

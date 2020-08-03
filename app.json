@@ -34,6 +34,9 @@
     }, 
     "web": {
       "favicon": "./assets/images/favicon.png"
+    },
+    "notification": {
+      "icon": "./media/wduNotifIcon.png"
     }
   }
 
