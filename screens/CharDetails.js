@@ -4,6 +4,9 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighl
    Image, ImageBackground, Dimensions, FlatList, Modal } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import NumericInput from 'react-native-numeric-input'
+import {
+  SET_SNACKBAR,
+} from '../redux/types';
 
 import _ from 'lodash'
 const chroma = require('chroma-js')
@@ -13,8 +16,11 @@ import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
 import pointsIcon from '../assets/images/pointsIcon.png'
 import rankCoinIcon from '../assets/images/rankCoinIcon.png'
+import atkIcon from '../assets/images/atkIcon.png'
+import defIcon from '../assets/images/defIcon.png'
+
 import statCoinIcon from '../assets/images/statCoinIcon.png'
-import {useRankCoin, useStatCoin, updateWaifuImg, getBaseStats} from '../redux/actions/dataActions'
+import {useRankCoin, useStatCoin, updateWaifuImg, getBaseStats, getRankColor} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -106,28 +112,41 @@ export default class CharDetails extends Component {
   }
 
   updateImgText(text){
-    if((text.match(/\.(jpeg|jpg|gif|png)$/) != null))
-      this.setState({newImage: text})
+    this.setState({newImage: text})
   }
 
   async updateImg(){
-    var success = await updateWaifuImg(this.state.waifu, this.state.newImage);
-    
-    if(success){
-      this.setState({ newVal: null, showUpdateImg: false})
+    if((this.state.newImage.match(/\.(jpeg|jpg|gif|png)$/) != null)){
+      var success = await updateWaifuImg(this.state.waifu, this.state.newImage);
+      
+      if(success){
+        this.setState({ newVal: null, showUpdateImg: false})
+      }
+    }
+    else{
+      store.dispatch({
+        type: SET_SNACKBAR,
+        payload: {type: "warning", message: `Image Url Must Be .jpeg, .jpg, .gif or .png`}
+      });
+      return;
     }
   }
 
   render(){
     const waifu = this.state.waifu;
 
+    var attackNeeded = 0;
+    var defenseNeeded = 0;
     var pointsNeededToRank = 0;
     var statCoinsNeededToRank = 0;
+    var nextRankColor = getRankColor(waifu.rank);
+    
     if(waifu.rank < 4){
       var baseStats = getBaseStats(waifu.rank + 1);
+      nextRankColor = getRankColor(waifu.rank + 1);
 
-      var attackNeeded = baseStats.attack - waifu.attack < 0 ? 0 : baseStats.attack - waifu.attack;
-      var defenseNeeded = baseStats.defense - waifu.defense < 0 ? 0 : baseStats.defense - waifu.defense;
+      attackNeeded = baseStats.attack - waifu.attack < 0 ? 0 : baseStats.attack - waifu.attack;
+      defenseNeeded = baseStats.defense - waifu.defense < 0 ? 0 : baseStats.defense - waifu.defense;
 
       statCoinsNeededToRank = attackNeeded + defenseNeeded;
       pointsNeededToRank = (waifu.rank + 1) * 5;
@@ -136,12 +155,6 @@ export default class CharDetails extends Component {
     var displayName = waifu.name;
     if(waifu.type != 'Anime-Manga')
       displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
-
-    var canPointRank = false;
-    if(waifu.rank < 4){
-      var baseStats = getBaseStats(waifu.rank + 1)
-      canPointRank = waifu.attack >= baseStats.attack && waifu.defense >= baseStats.defense;
-    }
 
     return (
       <View style={[styles.container]}>
@@ -186,7 +199,7 @@ export default class CharDetails extends Component {
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showRankCoinConf: true})}
-                        disabled={this.state.userInfo.rankCoins <= 0 || waifu.rank >= 4 || (pointsNeededToRank == 0 || statCoinsNeededToRank > this.state.userInfo.statCoins)}
+                        disabled={waifu.rank >= 4 || (this.state.userInfo.rankCoins <= 0 && (pointsNeededToRank == 0 || statCoinsNeededToRank > this.state.userInfo.statCoins))}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
@@ -232,8 +245,24 @@ export default class CharDetails extends Component {
             
             <View style={{flex:1, justifyContent:"center", alignItems:"center"}}>
               <View style={{flexDirection:"row"}}>
-                <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={pointsIcon} />
-                <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={statCoinIcon} />
+                <View style={[{height: 100, width: 100, margin:8}]}>
+                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={pointsIcon} />
+                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
+                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{pointsNeededToRank}</Text>
+                  </View>
+                </View>
+                <View style={[{height: 100, width: 100, margin:8}]}>
+                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={atkIcon} />
+                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
+                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{attackNeeded}</Text>
+                  </View>
+                </View>
+                <View style={[{height: 100, width: 100, margin:8}]}>
+                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={defIcon} />
+                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
+                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{defenseNeeded}</Text>
+                  </View>
+                </View>
               </View>
               
               <View style={{flex:1}}>
@@ -244,7 +273,7 @@ export default class CharDetails extends Component {
                       mode={"contained"} color={chroma('aqua').hex()} 
                       labelStyle={{fontSize: 20, fontFamily: "Edo", height: 'auto'}}
                     >
-                      Points - {pointsNeededToRank} Stat Coins - {statCoinsNeededToRank}
+                      Rank Up
                     </Button>
                   </View>
                 </View>
@@ -276,8 +305,8 @@ export default class CharDetails extends Component {
           onRequestClose={() => this.setState({showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})}
         >
           <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={{height: 100, width: width, backgroundColor: chroma("white"), borderRadius: 25}}>
-              <View style={{flex:1, flexDirection:"row"}}>
+            <View style={{flex:1, width: width, backgroundColor: chroma("white"), borderRadius: 25, alignItems:"center", justifyContent: "center"}}>
+              <View style={{height: 300, width: width/1.5, }}>
                 <View style={{flex:1}}>
                   <Text style={[styles.statText, {color:"black"} ]}>ATK</Text>
                   <NumericInput value={this.state.atkStatUp}

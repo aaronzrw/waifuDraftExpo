@@ -12,7 +12,8 @@ import {
   SET_WAIFU_LIST,
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
-  SET_GAUNTLET
+  SET_GAUNTLET,
+  SET_BOSS_ITEMS
 } from '../types';
   
   const initialState = {
@@ -92,6 +93,11 @@ import {
           ...state,
           bosses: action.payload
         }
+      case SET_BOSS_ITEMS:
+        return {
+          ...state,
+          bossItems: action.payload
+        }
       case SUB_SNAPSHOTS:
         if (state.unSubUser != null){
           state.unSubUser()
@@ -103,6 +109,7 @@ import {
           state.unSubTrades()
           state.unSubGauntlet()
           state.unSubChats()
+          state.unSubBossItems()
         }
 
         return{
@@ -120,6 +127,7 @@ import {
           state.unSubTrades()
           state.unSubGauntlet()
           state.unSubChats()
+          state.unSubBossItems()
         }
 
         return{

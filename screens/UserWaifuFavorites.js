@@ -9,7 +9,7 @@ import _, { replace } from "lodash";
 import ls from 'lz-string';
 
 import Swiper from 'react-native-swiper'
-import { submitWaifu, toggleWishListWaifu } from '../redux/actions/dataActions'
+import { submitWaifu, toggleWishListWaifu, getRankColor } from '../redux/actions/dataActions'
 
 // Redux stuff
 import store from "../redux/store";
@@ -47,6 +47,7 @@ class CharThumbNail extends Component {
       allUsers,
       openMenu: false,
       isSubmitted,
+      rankColor: getRankColor(char.rank || 1)
     }
 
     // this.submitWaifu = this.submitWaifu.bind(this)
@@ -59,7 +60,7 @@ class CharThumbNail extends Component {
 
     var popRank = char.popRank ?? null;
     var husbando = null;
-    var rankColor = chroma('black').alpha(.5)
+    var rankColor = getRankColor(char.rank || 1)
     
     if(this.state.isSubmitted){
       switch(char.husbandoId){
@@ -72,21 +73,6 @@ class CharThumbNail extends Component {
           husbando = this.state.allUsers.filter(x => x.userId == char.husbandoId)[0]
           break;
       }
-  
-      switch(char.rank){
-        case 1:
-          rankColor = chroma("#ff0000").alpha(.5)
-          break;
-        case 2:
-          rankColor = chroma("#835220").alpha(.5)
-          break;
-        case 3:
-          rankColor = chroma("#7b7979").alpha(.5)
-          break;
-        case 4:
-          rankColor = chroma("#b29600").alpha(.5)
-          break;
-      }
     }
 
     this.setState({ char, popRank, husbando, rankColor })
@@ -96,7 +82,7 @@ class CharThumbNail extends Component {
     var char = props.char;
     var popRank = char.popRank ?? null;
     var husbando = null;
-    var rankColor = chroma('black').alpha(.5)
+    var rankColor = getRankColor(char.rank || 1)
 
     if(this.state.isSubmitted){
       char = props.waifuList.filter(x => x.link == char.link)[0]
@@ -108,21 +94,6 @@ class CharThumbNail extends Component {
           break;
         default:
           husbando = props.allUsers.filter(x => x.userId == char.husbandoId)[0]
-          break;
-      }
-  
-      switch(char.rank){
-        case 1:
-          rankColor = chroma("#ff0000").alpha(.5)
-          break;
-        case 2:
-          rankColor = chroma("#835220").alpha(.5)
-          break;
-        case 3:
-          rankColor = chroma("#7b7979").alpha(.5)
-          break;
-        case 4:
-          rankColor = chroma("#b29600").alpha(.5)
           break;
       }
     }
@@ -178,7 +149,7 @@ class CharThumbNail extends Component {
                 source={{uri: this.state.char.img}}
               />
               
-              <View style={{minHeight: 50, height: 'auto',  padding: 2, backgroundColor: this.state.rankColor, alignItems:"center", justifyContent:"center"}}>
+              <View style={{minHeight: 50, height: 'auto',  padding: 2, backgroundColor: chroma(this.state.rankColor).alpha(.5), alignItems:"center", justifyContent:"center"}}>
                 <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>
                   {this.state.char.name.length > 15 ? this.state.char.name.slice(0,15) + '...' : this.state.char.name}
                 </Text>
@@ -321,7 +292,7 @@ export default class UserWaifuFavorites extends Component {
       <>
         <View style={[styles.slideContainer,{backgroundColor: chroma('white').hex()}]}>
           <View style={{width: width, height: 50, backgroundColor: chroma('black').alpha(.15)}}>
-            <Text style={styles.text}>WISHLIST</Text>
+            <Text style={styles.text}>WISHLIST - {chars.length}</Text>
           </View>
           <View style={styles.slide}>
             <View style={styles.SeriesListView}>

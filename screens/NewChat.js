@@ -54,7 +54,7 @@ export default class ViewChat extends Component {
     this.state = {
       navigation: props.navigation,
       chatImg: null,
-      chatName: null,
+      name: null,
       chatUsers: [],
       userInfo: store.getState().user.credentials,
       otherUsers: store.getState().user.otherUsers,
@@ -121,15 +121,24 @@ export default class ViewChat extends Component {
       this.handleSlideChange("next")
     }
     else{
-      var chat = {
-        users: this.state.chatUsers.concat(this.state.userInfo.userId),
-        muted: [],
-        createdBy: this.state.userInfo.userId,
-        messages: []
-      }
-
+      var chats = _.cloneDeep(store.getState().chat.chats);
+      var existChat = chats.filter(x => x.name == null && x.users.includes(this.state.chatUsers[0]) && x.users.includes(this.state.userInfo.userId))
+      
       this.state.navigation.goBack() //move back to main chat screen
-      this.state.navigation.navigate("ViewChat", {chat}) //navigate to viewChat
+      if(_.isEmpty(existChat)){
+        var chat = {
+          users: this.state.chatUsers.concat(this.state.userInfo.userId),
+          muted: [],
+          createdBy: this.state.userInfo.userId,
+          messages: []
+        }
+    
+        this.state.navigation.navigate("ViewChat", {chat})
+      }
+      else{
+        existChat = existChat[0];
+        this.state.navigation.navigate("ViewChat", {chat: existChat})
+      }
     }
   }
 
@@ -150,7 +159,7 @@ export default class ViewChat extends Component {
   }
 
   async createGroupChat(){
-    if(this.state.chatName == null){
+    if(this.state.name == null){
       store.dispatch({type: SET_SNACKBAR, payload: {type: "error", message: "Add Group Name"}});
       return;
     }
@@ -164,7 +173,7 @@ export default class ViewChat extends Component {
       users: this.state.chatUsers.concat(this.state.userInfo.userId),
       muted: [],
       createdBy: this.state.userInfo.userId,
-      name: this.state.chatName,
+      name: this.state.name,
       img: this.state.chatImg,
       messages: [],
     }
@@ -227,9 +236,9 @@ export default class ViewChat extends Component {
                   label="Add Group Name"
                   underlineColor= "teal"
                   style={[styles.textField]}
-                  value={this.state.chatName}
+                  value={this.state.name}
                   mode="Outlined"
-                  onChangeText={(text) => this.setState({chatName: text})}
+                  onChangeText={(text) => this.setState({name: text})}
                 />
               </View>
 

@@ -27,7 +27,7 @@ import waifuResting from '../assets/images/WaifuResting.gif'
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch';
-import { fightBoss } from '../redux/actions/dataActions';
+import { fightBoss, getRankColor, buyWaifu } from '../redux/actions/dataActions';
 
 import {
   LOADING_UI,
@@ -65,9 +65,11 @@ export default class BossFight extends Component {
       rolls: [],
       totalDmg: 0,
       size: { width, height },
+      boughtBack: false
     };
 
     this.selectWaifu = this.selectWaifu.bind(this)
+    this.buyBackWaifu = this.buyBackWaifu.bind(this)
     this.startBossFight = this.startBossFight.bind(this)
     this.handleSlideChange = this.handleSlideChange.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
@@ -192,21 +194,7 @@ export default class BossFight extends Component {
       return
     }
     
-    var rankColor = ""
-    switch(waifu.rank){
-      case 1:
-        rankColor = "#ff0000"
-        break;
-      case 2:
-        rankColor = "#835220"
-        break;
-      case 3:
-        rankColor = "#7b7979"
-        break;
-      case 4:
-        rankColor = "#b29600"
-        break;
-    }
+    var rankColor = getRankColor(waifu.rank);
     this.setState({selectedWaifu: waifu, waifuRankColor: rankColor})
     this.handleSlideChange("next")
   }
@@ -262,6 +250,11 @@ export default class BossFight extends Component {
       this.setState({ size: { width: layout.width, height: layout.height } });
     }
   };
+
+  buyBackWaifu(){
+    var price = this.state.selectedWaifu.rank * 10;
+    buyWaifu(this.state.selectedWaifu, price)
+  }
 
   render(){
     var waifus = _.cloneDeep(this.state.waifuList)
@@ -339,21 +332,7 @@ export default class BossFight extends Component {
                 style={styles.gridView}
                 spacing={20}
                 renderItem={({item, index}) => {
-                  var rankColor = ""
-                  switch(item.rank){
-                    case 1:
-                      rankColor = "#ff0000"
-                      break;
-                    case 2:
-                      rankColor = "#835220"
-                      break;
-                    case 3:
-                      rankColor = "#7b7979"
-                      break;
-                    case 4:
-                      rankColor = "#b29600"
-                      break;
-                  }
+                  var rankColor = getRankColor(item.rank)
 
                   return(
                     <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={[styles.itemContainer]}>
@@ -537,29 +516,22 @@ export default class BossFight extends Component {
                 <View style={{flex: 1, width: width}}>
                   <Image source={bossFightGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:5}}/>
 
-                  {/* Rolls */}
-                  <View style={{position:"absolute", zIndex:10, backgroundColor: chroma('black').alpha(.45), width: width, bottom: 0, left:0}}>
-                    {/* <View style={{ height:50, flexDirection:"row", justifyContent:"center", alignSelf:"center"}}>
-                      <View style={{flex:1, flexDirection:"row", alignItems:"flex-start", justifyContent:"flex-start"}}>
-                        <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50, tintColor: chroma('cyan').hex()}]} source={defIcon} />
-                        <Text style={[ styles.statsText, {color: 'white', fontSize: 35}]}>
-                          {this.state.selectedWaifu.defense}
-                        </Text>
-                      </View>
 
-                      <View style={{flex:1, flexDirection:"row", alignItems:"flex-start", justifyContent:"flex-start"}}>
-                        <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50, tintColor: chroma('cyan').hex()}]} source={bossHpIcon} />
-                        <Text style={[ styles.statsText, {color: 'white', fontSize: 35,
-                          textShadowColor: chroma('cyan').hex(),
-                          textShadowOffset: {width: -1, height: 1},
-                          textShadowRadius: 10
-                          }]}
+                  {
+                    this.state.fightResult == 2 && !this.state.boughtBack ?
+                      <View style={{position:"absolute", zIndex:10, backgroundColor: chroma('black').alpha(.45), width: width, bottom: 0, left:0}}>
+                        <Button mode={"contained"} color={chroma('aqua').hex()}
+                          labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                          onPress={() => this.buyBackWaifu()}
                         >
-                          {this.state.boss.hp}
-                        </Text>
+                          Quick Buy Waifu - {this.state.selectedWaifu.rank * 10} Points
+                        </Button>
                       </View>
-                    </View>*/}
+                    : <></>
+                  }
 
+                  {/* Rolls */}
+                  <View style={{position:"absolute", zIndex:10, backgroundColor: chroma('black').alpha(.45), width: width, bottom: 50, left:0}}>
                     {
                       this.state.rolls.length > 1 ?
                         <View style={{ height:45, flexDirection:"row", justifyContent:"center", alignSelf:"center"}}>

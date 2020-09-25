@@ -24,6 +24,8 @@ import TopVote from '../assets/images/TopVote.png'
 //Native Paper
 import Carousel, { ParallaxImage } from 'react-native-snap-carousel';
 
+import {getRankColor} from '../redux/actions/dataActions'
+
 const { width, height } = Dimensions.get('window');
 
 const chroma = require('chroma-js')
@@ -33,7 +35,7 @@ class CarouselItem extends PureComponent{
     this.state = {
       item: props.item,
       pollType: props.pollType,
-      dailyActive: props.dailyActive,
+      dailyActive: props.item.dailyActive,
       parallaxProps: props.parallaxProps,
       onPressCarousel: props._onPressCarousel,
 			userInfo: store.getState().user.credentials
@@ -44,7 +46,7 @@ class CarouselItem extends PureComponent{
     this.setState({
       item: props.item,
       pollType: props.pollType,
-      dailyActive: props.dailyActive,
+      dailyActive: props.item.dailyActive,
       parallaxProps: props.parallaxProps,
       onPressCarousel: props._onPressCarousel,
 			userInfo: store.getState().user.credentials
@@ -54,25 +56,21 @@ class CarouselItem extends PureComponent{
   render(){
     var rank = 1;
     var progress = 0;
-    var rankColor = "#ff0000";
     var userVote = this.state.item.votes.filter(x => x.husbandoId == this.state.userInfo.userId);
 
     if(this.state.pollType == "Weekly"){
       if (this.state.item.topVote.vote < 50){
         progress = this.state.item.topVote.vote/50
       }
-      else if(this.state.item.topVote.vote < 75){
-        rank = 2
-        rankColor = "#835220"
-        progress = this.state.item.topVote.vote/75
-      }
       else if(this.state.item.topVote.vote < 100){
-        rank = 3
-        rankColor = "#7b7979"
+        rank = 2
         progress = this.state.item.topVote.vote/100
       }
+      else if(this.state.item.topVote.vote < 200){
+        rank = 3
+        progress = this.state.item.topVote.vote/200
+      }
       else{
-        rankColor = "#b29600"
         rank = 4
       }
     }
@@ -83,12 +81,13 @@ class CarouselItem extends PureComponent{
       }
       else{
         rank = 2
-        rankColor = "#835220"
       }
     }
 
+    var rankColor = getRankColor(rank)
+
     return(
-      <TouchableOpacity onPress={() => this.state.onPressCarousel(this.state.item.waifuId)} style={styles.item}>
+      <TouchableOpacity activeOpacity={.85} onPress={() => this.state.onPressCarousel(this.state.item.waifuId)} style={styles.item}>
         <ParallaxImage
           source={{ uri: this.state.item.img }}
           containerStyle={styles.imageContainer}
@@ -342,8 +341,8 @@ export default class Home extends Component {
                 style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}
               >
                 <Carousel
-                  data={
-                      this.state.dailyPollWaifus.map(x => {
+                  data={this.state.dailyPollWaifus.map(x => 
+                    {
                       var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
                       var votes = _.orderBy(x.votes, ['vote'], ['desc']);
                       
@@ -374,7 +373,6 @@ export default class Home extends Component {
                   renderItem={this._renderItem}
                   hasParallaxImages={true}
                   loop
-                  enableSnap
                   inactiveSlideScale={.85}
                   onSnapToItem = { index => this.setState({dailyActiveIndex:index}) } />
 

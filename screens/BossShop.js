@@ -6,9 +6,6 @@ import { FlatGrid } from 'react-native-super-grid';
 import _ from 'lodash'
 import Swiper from 'react-native-swiper'
 
-import UserProfileImg from '../components/UserProfileImg'
-import { getRankColor } from '../redux/actions/dataActions'
-
 //Media
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
@@ -17,13 +14,10 @@ import atkIcon from '../assets/images/atkIcon.png'
 import store from '../redux/store';
 import watch from 'redux-watch'
 
-//Component
-import RankBackground from '../components/RankBackGround'
-
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
-export default class Shop extends Component {
+export default class BossShop extends Component {
   constructor(props) {
     super();
 
@@ -32,11 +26,11 @@ export default class Shop extends Component {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
       userInfo: store.getState().user.credentials,
-      shop: store.getState().data.waifuList.filter(x => x.husbandoId == "Shop"),
+      shopItems: store.getState().data.bossItems,
       size: {width,height}
     };
 
-    this.selectWaifu = this.selectWaifu.bind(this)
+    this.selectItem = this.selectItem.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
@@ -46,16 +40,14 @@ export default class Shop extends Component {
     let userReducerWatch = watch(store.getState, 'user')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
-      var shop = newVal.waifuList.filter(x => x.husbandoId == "Shop");
-			this.setState({ shop })
+			this.setState({ shopItems: newVal.bossItems })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       this.setState({ userInfo: newVal.credentials })
     }))
     
-    var shop = store.getState().data.waifuList.filter(x => x.husbandoId == "Shop");
-    this.setState({ shop, userInfo: store.getState().user.credentials })
+    this.setState({ shopItems: store.getState().data.bossItems, userInfo: store.getState().user.credentials })
   }
 
   unSetSubscribes(){
@@ -77,7 +69,7 @@ export default class Shop extends Component {
     this.mounted = false;
   }
 
-  selectWaifu(waifu){
+  selectItem(item){
     this.state.navigation.navigate("BuyWaifu", {waifu})
   }
 
@@ -89,43 +81,38 @@ export default class Shop extends Component {
         :
           <View style={styles.waifuListView}>
             <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
-              <Text style={styles.text}>SHOP</Text>
+              <Text style={styles.text}>BOSS SHOP</Text>
             </View>
+
             <FlatGrid
-              itemDimension={150}
-              items={this.state.shop}
+              itemDimension={250}
+              items={this.state.shopItems}
               style={styles.gridView}
               // staticDimension={300}
               // fixed
-              spacing={20}
+              // spacing={20}
               renderItem={({item, index}) => {
-                var rankColor = getRankColor(item.rank)
 
                 return(
-                  <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
-                    <View style={styles.statView}>
-                      <View style={styles.statRow}>
-                        <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                        <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
-                      </View>
-                      <View style={styles.statRow}>
-                        <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                        <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
-                      </View>
-                    </View>
-
+                  <TouchableOpacity activeOpacity={.25} onPress={() => this.selectItem(item)} style={styles.itemContainer}>
                     <Image
                       style={{
                         flex: 1,
                         aspectRatio: 1,
-                        resizeMode: "cover",
+                        resizeMode: "contain",
                         borderRadius: 10,
                         ...StyleSheet.absoluteFillObject,
                         
                       }}
                       source={{uri: item.img}}
                     />
-                    <RankBackground rank={item.rank} name={item.name} />
+                    <View style={{ padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
+                      <Text style={{color: "white", fontFamily: "Edo", fontSize:30, textAlign: "center"}}>{item.userName}</Text>
+                      
+                      {/* <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>POINTS - {item.points}</Text> */}
+                      {/* <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>SUBMIT SLOTS - {item.submitSlots}</Text> */}
+                      <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.price} Boss Coins</Text>
+                    </View>
                   </TouchableOpacity>
                 )
               }}
@@ -137,7 +124,7 @@ export default class Shop extends Component {
   }
 }
 
-Shop.navigationOptions = {
+BossShop.navigationOptions = {
   header: null,
 };
 
@@ -214,7 +201,7 @@ const styles = StyleSheet.create({
   waifuListView:{
     flex:1,
     width: width,
-    backgroundColor: chroma('gray').alpha(.75),
+    backgroundColor: chroma('red').alpha(1),
   },
   gridView: {
     flex: 1,
@@ -223,11 +210,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     borderRadius: 10,
     // padding: 10,
-    height: 250,
+    height: 150,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 1,
-    elevation: 10
+    elevation: 10,
+    backgroundColor: chroma("white")
   },
   statView:{
     flex:1, flexDirection: "row",

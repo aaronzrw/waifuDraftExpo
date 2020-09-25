@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, FAB, TouchableRipple, Card, Button } from 'react-native-paper';
+import { Text, FAB, TouchableRipple, Card, Button, Avatar } from 'react-native-paper';
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
@@ -9,7 +9,6 @@ import _ from 'lodash'
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
 import pointsIcon from '../assets/images/pointsIcon.png'
-import submitSlotsIcon from '../assets/images/submitSlotIcon.png'
 import rankCoinIcon from '../assets/images/rankCoinIcon.png'
 import statCoinIcon from '../assets/images/statCoinIcon.png'
 
@@ -19,10 +18,23 @@ import watch from 'redux-watch'
 
 //Component
 import RankBackground from '../components/RankBackGround'
-import { updateTrade } from '../redux/actions/dataActions';
+import { updateTrade, getRankColor } from '../redux/actions/dataActions';
 
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
+
+const StatAvatar = (props) => {
+
+  if(props.value == 0)
+    return <></>
+
+  return (
+    <View style={{alignSelf:"center", justifyContent: 'center', height: 75, margin: 8}}>
+      <Avatar.Icon size={50} icon={props.icon} color={'white'} style={{backgroundColor: 'transparent'}}/>
+      <Text style={[ styles.statsText, {color: "white", textAlign: 'center'}]}>{props.value}</Text>
+    </View>
+  )
+};
 
 export default class ViewTrade extends Component {
   constructor(props) {
@@ -34,7 +46,6 @@ export default class ViewTrade extends Component {
       navigation: props.navigation,
       trade: props.route.params.trade,
 			loading: store.getState().data.loading,
-      // pollIsActive: store.getState().data.poll.weekly.isActive,
       waifuList: store.getState().data.waifuList,
       fromUser: users.filter(x => x.userId == props.route.params.trade.from.husbandoId)[0],
       toUser: users.filter(x => x.userId == props.route.params.trade.to.husbandoId)[0],
@@ -57,7 +68,6 @@ export default class ViewTrade extends Component {
       if(!_.isEmpty(trade)){
         this.setState({
           trade: trade[0],
-          // pollIsActive: newVal.poll.weekly.isActive,
         })
       }
       else{
@@ -80,8 +90,7 @@ export default class ViewTrade extends Component {
         trade: trade[0],
         fromUser: users.filter(x => x.userId == this.state.trade.from.husbandoId)[0],
         toUser: users.filter(x => x.userId == this.state.trade.to.husbandoId)[0],
-        userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
-        // pollIsActive: store.getState().data.poll.weekly.isActive,
+        userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus}
       })
     }
     else{
@@ -135,163 +144,27 @@ export default class ViewTrade extends Component {
         :
           <View style={styles.waifuListView}>
             <View style={{flex: 1, width: width}}>
-              {/* From Section */}
-              <View style={{flex: 1, width: width}}>
-                <View style={{backgroundColor: chroma('black').alpha(.35)}}>
-                  <Text style={[styles.text, {color: "white", textAlign: "center"}]}>FROM - {this.state.fromUser.userName}</Text>
-                  
-                  {/* Points Section */}
-                  {
-                    this.state.trade.from.points > 0 || this.state.trade.from.rankCoins > 0 || this.state.trade.from.statCoins > 0 ?
-                      <View style={styles.pointsView}>
-
-                        {this.state.trade.from.points > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.points}</Text>
-                          </View>
-                        :<></>}
-                        {/* {this.state.trade.from.submitSlots > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.submitSlots}</Text>
-                          </View>
-                        :<></>} */}
-                        {this.state.trade.from.rankCoins > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.rankCoins}</Text>
-                          </View>
-                        :<></>}
-                        {this.state.trade.from.statCoins > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.statCoins}</Text>
-                          </View>
-                        :<></>}
-                        
-                      </View>
-                    : <></>
-                  }
-                </View>
-                <View style={{flex: 1, width: width}}>
-                  <FlatGrid
-                    itemDimension={150}
-                    items={this.state.waifuList.filter(x => this.state.trade.from.waifus.map(x => x.waifuId).includes(x.waifuId))}
-                    style={styles.gridView}
-                    spacing={20}
-                    renderItem={({item, index}) => {
-                      var rankColor = ""
-                      switch(item.rank){
-                        case 1:
-                          rankColor = "#ff0000"
-                          break;
-                        case 2:
-                          rankColor = "#835220"
-                          break;
-                        case 3:
-                          rankColor = "#7b7979"
-                          break;
-                        case 4:
-                          rankColor = "#b29600"
-                          break;
-                      }
-
-                      return(
-                        <View style={[styles.itemContainer]}>
-                          <View style={styles.statView}>
-                            <View style={styles.statRow}>
-                              <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                              <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
-                            </View>
-                            <View style={styles.statRow}>
-                              <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                              <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
-                            </View>
-                          </View>
-
-                          <Image
-                            style={{
-                              flex: 1,
-                              aspectRatio: 1,
-                              resizeMode: "cover",
-                              borderRadius: 10,
-                              ...StyleSheet.absoluteFillObject,
-                            }}
-                            source={{uri: item.img}}
-                          />
-                          <RankBackground rank={item.rank} name={item.name} />
-                        </View>
-                      )
-                    }}
-                  />
-                </View>
-              </View>
-              
               {/* To Section */}
               <View style={{flex: 1, width: width}}>
                 <View style={{backgroundColor: chroma('black').alpha(.35)}}>
                   <Text style={[styles.text, {color: "white", textAlign: "center"}]}>TO - {this.state.toUser.userName}</Text>
-                  
-                  {/* Points Section */}
-                  {
-                    this.state.trade.to.points > 0 || this.state.trade.to.rankCoins > 0 || this.state.trade.to.statCoins > 0 ?
-                      <View style={styles.pointsView}>
-                        <View style={{flex: 1}}/>
-
-                        {this.state.trade.to.points > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.points}</Text>
-                          </View>
-                        :<></>}
-                        {/* {this.state.trade.to.submitSlots > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.submitSlots}</Text>
-                          </View>
-                        :<></>} */}
-                        {this.state.trade.to.rankCoins > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.rankCoins}</Text>
-                          </View>
-                        :<></>}
-                        {this.state.trade.to.statCoins > 0 ?
-                          <View style={styles.pointsReviewRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
-                            <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.statCoins}</Text>
-                          </View>
-                        :<></>}
-                        
-                        <View style={{flex: 1}}/>
-                      </View>
-                    : <></>
-                  }
                 </View>
 
-                <View style={{flex: 1, width: width}}>
+                <ImageBackground style={{flex: 1, width: width, backgroundColor: chroma('black')}} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.toUser.img}}>
+                  <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, marginLeft: width - 50, width: 50,
+                      backgroundColor: chroma('silver').alpha(.15), justifyContent:"center", alignItems:"center"}}>
+                    <StatAvatar icon={pointsIcon} value={this.state.trade.to.points} />
+                    <StatAvatar icon={statCoinIcon} value={this.state.trade.to.statCoins} />
+                    <StatAvatar icon={rankCoinIcon} value={this.state.trade.to.rankCoins} />
+                  </View>
+
                   <FlatGrid
                     itemDimension={150}
                     items={this.state.waifuList.filter(x => this.state.trade.to.waifus.map(x => x.waifuId).includes(x.waifuId))}
                     style={styles.gridView}
                     spacing={20}
                     renderItem={({item, index}) => {
-                      var rankColor = ""
-                      switch(item.rank){
-                        case 1:
-                          rankColor = "#ff0000"
-                          break;
-                        case 2:
-                          rankColor = "#835220"
-                          break;
-                        case 3:
-                          rankColor = "#7b7979"
-                          break;
-                        case 4:
-                          rankColor = "#b29600"
-                          break;
-                      }
+                      var rankColor = getRankColor(item.rank)
 
                       return(
                         <View style={[styles.itemContainer]}>
@@ -321,7 +194,60 @@ export default class ViewTrade extends Component {
                       )
                     }}
                   />
+                </ImageBackground>
+              </View>
+            
+              {/* From Section */}
+              <View style={{flex: 1, width: width}}>
+                <View style={{backgroundColor: chroma('black').alpha(.35)}}>
+                  <Text style={[styles.text, {color: "white", textAlign: "center"}]}>FROM - {this.state.fromUser.userName}</Text>
                 </View>
+                
+                <ImageBackground style={{flex: 1, width: width, backgroundColor: chroma('black')}} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.fromUser.img}}>
+                  <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, marginLeft: width - 50, width: 50,
+                    backgroundColor: chroma('silver').alpha(.15), justifyContent:"center", alignItems:"center"}}>
+                    <StatAvatar icon={pointsIcon} value={this.state.trade.from.points} />
+                    <StatAvatar icon={statCoinIcon} value={this.state.trade.from.statCoins} />
+                    <StatAvatar icon={rankCoinIcon} value={this.state.trade.from.rankCoins} />
+                  </View>
+                  
+                  <FlatGrid
+                    itemDimension={150}
+                    items={this.state.waifuList.filter(x => this.state.trade.from.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                    style={styles.gridView}
+                    spacing={20}
+                    renderItem={({item, index}) => {
+                      var rankColor = getRankColor(item.rank)
+
+                      return(
+                        <View style={[styles.itemContainer]}>
+                          <View style={styles.statView}>
+                            <View style={styles.statRow}>
+                              <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
+                              <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
+                            </View>
+                            <View style={styles.statRow}>
+                              <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
+                              <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
+                            </View>
+                          </View>
+
+                          <Image
+                            style={{
+                              flex: 1,
+                              aspectRatio: 1,
+                              resizeMode: "cover",
+                              borderRadius: 10,
+                              ...StyleSheet.absoluteFillObject,
+                            }}
+                            source={{uri: item.img}}
+                          />
+                          <RankBackground rank={item.rank} name={item.name} />
+                        </View>
+                      )
+                    }}
+                  />
+                </ImageBackground>
               </View>
             </View>
 
@@ -456,7 +382,6 @@ const styles = StyleSheet.create({
     flex:1,
     fontFamily:"Edo",
     fontSize:25,
-    marginLeft: 5
   },
   pointsView:{
     height:30, flexDirection: "row",
@@ -465,7 +390,7 @@ const styles = StyleSheet.create({
     paddingTop: 10, paddingBottom: 10, paddingLeft: 10
   },
   pointsReviewRow:{
-    width: 75,
+    flex: 1,
     flexDirection: "row",
     alignItems:"center",
     justifyContent: "center"

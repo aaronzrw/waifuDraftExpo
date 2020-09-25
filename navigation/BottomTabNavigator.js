@@ -39,6 +39,7 @@ import ViewWishListCharactersScreen from '../screens/ViewWishListCharacters';
 import UserWaifuFavoritesScreen from '../screens/UserWaifuFavorites';
 
 import ShopScreen from '../screens/Shop';
+import BossShopScreen from '../screens/BossShop';
 import BuyWaifuScreen from '../screens/BuyWaifu';
 
 const homeIcon = require('../assets/images/HomeIcon.png')
@@ -137,6 +138,7 @@ function GauntletStackScreen() {
     >
       <GauntletStack.Screen name="Gauntlet" component={GauntletScreen} />
       <GauntletStack.Screen name="BossFight" component={BossFightScreen} />
+      <GauntletStack.Screen name="BossShop" component={BossShopScreen} />
     </GauntletStack.Navigator>
   );
 }

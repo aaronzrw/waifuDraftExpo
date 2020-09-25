@@ -9,12 +9,17 @@ import Swiper from 'react-native-swiper'
 //Media
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
-const favoriteHeart = require('../assets/images/FavoriteHeart.png')
+import favoriteHeart from '../assets/images/FavoriteHeart.png'
+
+import animeIcon from '../assets/images/AnimeLogo.png'
+import marvelIcon from '../assets/images/MarvelLogo.png'
+import dcIcon from '../assets/images/DCLogo.png'
 
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch'
 import { useSelector } from 'react-redux';
+import { getRankColor } from '../redux/actions/dataActions'
 import { logoutUser } from '../redux/actions/userActions'
 
 //Component
@@ -55,6 +60,7 @@ export default class OtherUserProfile extends Component {
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
       users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
       trades: trades,
+      waifuType: "All",
       size: {width,height}
     };
 
@@ -65,6 +71,7 @@ export default class OtherUserProfile extends Component {
     this.startTrade = this.startTrade.bind(this)
     this.selectTrade = this.selectTrade.bind(this)
     this.selectWaifu = this.selectWaifu.bind(this)
+    this.changeFabState = this.changeFabState.bind(this)
     this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
@@ -137,7 +144,7 @@ export default class OtherUserProfile extends Component {
 
   startChat(){
     var chats = _.cloneDeep(store.getState().chat.chats);
-    var existChat = chats.filter(x => x.chatName == undefined && x.users.includes(this.state.otherUser.userId))
+    var existChat = chats.filter(x => x.name == null && x.users.includes(this.state.otherUser.userId) && x.users.includes(this.state.userInfo.userId))
 
     if(_.isEmpty(existChat)){
       var chat = {
@@ -154,8 +161,26 @@ export default class OtherUserProfile extends Component {
     }
   }
 
+  changeFabState(){
+    var fabState = this.state.fabOpen;
+    this.setState({fabOpen: !fabState})
+  }
+  
   render(){
     var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.otherUser.waifus.includes(x.waifuId));
+
+    switch(this.state.waifuType){
+      case "Anime-Manga":
+        waifus = waifus.filter(x => x.type == "Anime-Manga")
+        break;
+      case "Marvel":
+        waifus = waifus.filter(x => x.type == "Marvel")
+        break;
+      case "DC":
+        waifus = waifus.filter(x => x.type == "DC")
+        break;
+    }
+
     var waifuGroups = _.chain(waifus)
     .orderBy((o) => (o.attack + o.defense), ['desc'])
     .groupBy(waifu => Number(waifu.rank))
@@ -165,6 +190,12 @@ export default class OtherUserProfile extends Component {
 
     waifus = waifuGroups.flatMap(x => x.waifus)
 
+    var trades = _.orderBy(_.cloneDeep(this.state.trades), ['createdDate'], ['desc'])
+
+    var activeTrades = _.cloneDeep(trades.filter(x => x.status == "Active"))
+    var completedTrades = _.cloneDeep(trades.filter(x => x.status != "Active"))
+
+    trades = activeTrades.concat(completedTrades);
     return (
       <>
         {this.state.loading ?
@@ -214,9 +245,10 @@ export default class OtherUserProfile extends Component {
                 <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
                   <Text style={styles.text}>TRADES</Text>
                 </View>
+
                 <FlatGrid
                   itemDimension={200}
-                  items={_.cloneDeep(this.state.trades.filter(x => x.status == "Active")).concat(_.cloneDeep(this.state.trades.filter(x => x.status != "Active")))}
+                  items={trades}
                   style={styles.gridView}
                   // staticDimension={300}
                   // fixed
@@ -266,6 +298,14 @@ export default class OtherUserProfile extends Component {
                             </View>
                           </View>
                         </View>
+                        
+                        <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
+                          <View style={{flex: 1}}>
+                            <Text style={[styles.text, {fontSize: 20}]}>
+                              {item.createdDate.toDateString()}
+                            </Text>
+                          </View>
+                        </View>
                       </TouchableOpacity>
                     )
                   }}
@@ -285,21 +325,7 @@ export default class OtherUserProfile extends Component {
                   spacing={20}
                   renderItem={({item, index}) => {
                     var isFav = this.state.userInfo.wishList.includes(item.link)
-                    var rankColor = ""
-                    switch(item.rank){
-                      case 1:
-                        rankColor = "#ff0000"
-                        break;
-                      case 2:
-                        rankColor = "#835220"
-                        break;
-                      case 3:
-                        rankColor = "#7b7979"
-                        break;
-                      case 4:
-                        rankColor = "#b29600"
-                        break;
-                    }
+                    var rankColor = getRankColor(item.rank)
 
                     return(
                       <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
@@ -339,12 +365,55 @@ export default class OtherUserProfile extends Component {
                   }}
                 />
                 
-                <FAB
-                  small
-                  color="white"
-                  style={styles.favFab}
-                  icon="heart-box"
-                  onPress={() => this.openUserFavoritesScreen()}
+                <FAB.Group
+                  fabStyle={{backgroundColor: chroma('aqua').hex()}}
+                  open={this.state.fabOpen}
+                  icon={'settings'}
+                  actions={[
+                    { icon: 'heart-box',
+                      label: 'Show Favorited Waifus',
+                      onPress: () => this.openUserFavoritesScreen()
+                    },
+                    { icon: 'account-multiple-outline',
+                      label: 'Show All Waifus',
+                      onPress: () => this.setState({waifuType: "All"})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={animeIcon}
+                            style={{ width: size , height: size}}
+                          />
+                        ),
+                      // icon: {marvelIcon},
+                      label: 'Show Anime Waifus',
+                      onPress: () => this.setState({waifuType: "Anime-Manga"})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={marvelIcon}
+                            style={{ width: size , height: size}}
+                          />
+                        ),
+                      label: 'Show Marvel Waifus',
+                      onPress: () => this.setState({waifuType: "Marvel"})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={dcIcon}
+                            style={{ width: size , height: size}}
+                          />
+                        ),
+                      label: 'Show DC Waifus',
+                      onPress: () => this.setState({waifuType: "DC"})
+                    },
+                  ]}
+                  onStateChange={() => this.changeFabState()}
                 />
               </View>
             </Swiper>

@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Button, Image, ImageBackground, Dimensions } from 'react-native';
-import { Text, TouchableRipple } from 'react-native-paper';
+import { Text, FAB, TouchableRipple } from 'react-native-paper';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import _ from 'lodash'
@@ -56,6 +56,7 @@ export default class Gauntlet extends Component {
     this.selectBoss = this.selectBoss.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
+    this.openBossShopScreen = this.openBossShopScreen.bind(this)
   }
 
   setSubscribes(){
@@ -98,6 +99,10 @@ export default class Gauntlet extends Component {
     this.state.navigation.navigate("BossFight", {boss})
   }
 
+  openBossShopScreen(){
+    this.state.navigation.navigate("BossShop", {})
+  }
+
   _onLayoutDidChange = e => {
     if(this.mounted){
       const layout = e.nativeEvent.layout;
@@ -111,202 +116,203 @@ export default class Gauntlet extends Component {
         {this.state.loading ?
           <></>
         :
-          <Swiper
-            index={0}
-            loop
-            showsPagination={false}
-            style={{backgroundColor:"rgba(0,0,0,1)"}}
-          >
-            {this.state.bosses.map(boss => {
-              var fights = _.cloneDeep(boss.fights);
-              var userFightRec = fights.filter(x => x.husbandoId == this.state.userInfo.userId)
-              if(_.isEmpty(userFightRec))
-                userFightRec = null
-              else
-                userFightRec = userFightRec[0]
+          <>
+            <Swiper
+              index={0}
+              loop
+              showsPagination={false}
+              style={{backgroundColor:"rgba(0,0,0,1)"}}
+            >
+              {this.state.bosses.map(boss => {
+                var fights = _.cloneDeep(boss.fights);
+                var userFightRec = fights.filter(x => x.husbandoId == this.state.userInfo.userId)
+                if(_.isEmpty(userFightRec))
+                  userFightRec = null
+                else
+                  userFightRec = userFightRec[0]
 
-              var indi = shitTierBossIndi;
-              
-              var bgColor = "#ff0000";
-              switch(boss.tier){
-                case 2:
-                  bgColor = "#835220"
-                  break;
-                case 3:
-                  bgColor = "#7b7979"
-                  break;
-                case 4:
-                  bgColor = "#b29600"
-                  break;
-              }
-
-              var minRank = shitTierBossIndi;
-              var maxRank = goldTierBossIndi;
-              var hasMinRankReq = false;
-              var hasMaxRankReq = false;
-              var hasAMReq = false;
-              var hasDcReq = false;
-              var hasMarvelReq = false;
-
-              boss.requirements.forEach(req => {
-                var key = Object.keys(req)[0];
-                if(key == "rank"){
-                  Object.keys(req[key]).forEach(x => {
-                    if(x == "min"){
-                      switch(req[key][x]){
-                        case 2:
-                          hasMinRankReq = true;
-                          minRank = bronzeTierBossIndi
-                          break;
-                        case 3:
-                          hasMinRankReq = true;
-                          minRank = silverTierBossIndi
-                          break;
-                        case 4:
-                          hasMinRankReq = true;
-                          minRank = goldTierBossIndi
-                          break;
-                      }
-                    }
-                    else if(x == "max"){
-                      switch(req[key][x]){
-                        case 2:
-                          hasMaxRankReq = true;
-                          maxRank = bronzeTierBossIndi
-                          break;
-                        case 3:
-                          hasMaxRankReq = true;
-                          maxRank = silverTierBossIndi
-                          break;
-                        case 4:
-                          hasMaxRankReq = true;
-                          maxRank = goldTierBossIndi
-                          break;
-                      }
-                    }
-                  });
+                var indi = shitTierBossIndi;
+                
+                var bgColor = "#ff0000";
+                switch(boss.tier){
+                  case 2:
+                    bgColor = "#835220"
+                    break;
+                  case 3:
+                    bgColor = "#7b7979"
+                    break;
+                  case 4:
+                    bgColor = "#b29600"
+                    break;
                 }
-                else{
-                  if(req[key].includes("Anime-Manga"))
-                    hasAMReq = true
-                  if(req[key].includes("Marvel"))
-                    hasMarvelReq = true
-                  if(req[key].includes("DC"))
-                    hasDcReq = true
-                }
-              })
 
-              return (
-                <View key={boss.name} onLayout={this._onLayoutDidChange}
-                  style={{flex:1, justifyContent:"center", alignItems:"center"}}>
+                var minRank = shitTierBossIndi;
+                var maxRank = goldTierBossIndi;
+                var hasMinRankReq = false;
+                var hasMaxRankReq = false;
+                var hasAMReq = false;
+                var hasDcReq = false;
+                var hasMarvelReq = false;
 
-                  {userFightRec != null && userFightRec.defeated ?
-                    <View style={[styles.bossDefeatedView]}>
-                      <Image source={bossDefeatedIcon} style={{tintColor: "white", height: 300, width:300}} />
-                    </View>
-                  :<></>}
+                boss.requirements.forEach(req => {
+                  var key = Object.keys(req)[0];
+                  if(key == "rank"){
+                    Object.keys(req[key]).forEach(x => {
+                      if(x == "min"){
+                        switch(req[key][x]){
+                          case 2:
+                            hasMinRankReq = true;
+                            minRank = bronzeTierBossIndi
+                            break;
+                          case 3:
+                            hasMinRankReq = true;
+                            minRank = silverTierBossIndi
+                            break;
+                          case 4:
+                            hasMinRankReq = true;
+                            minRank = goldTierBossIndi
+                            break;
+                        }
+                      }
+                      else if(x == "max"){
+                        switch(req[key][x]){
+                          case 2:
+                            hasMaxRankReq = true;
+                            maxRank = bronzeTierBossIndi
+                            break;
+                          case 3:
+                            hasMaxRankReq = true;
+                            maxRank = silverTierBossIndi
+                            break;
+                          case 4:
+                            hasMaxRankReq = true;
+                            maxRank = goldTierBossIndi
+                            break;
+                        }
+                      }
+                    });
+                  }
+                  else{
+                    if(req[key].includes("Anime-Manga"))
+                      hasAMReq = true
+                    if(req[key].includes("Marvel"))
+                      hasMarvelReq = true
+                    if(req[key].includes("DC"))
+                      hasDcReq = true
+                  }
+                })
 
-                  <TouchableOpacity onPress={() => this.selectBoss(boss)}
-                    rippleColor="rgba(0, 0, 0, 1)"
-                    style={{height: this.state.size.height * .9, width: width * .85}}
-                  >
-                    <ImageBackground blurRadius={.25} style={[styles.imageContainer]}
-                      imageStyle={{resizeMode:"cover"}} source={{uri: boss.img}}>
-                      <LinearGradient
-                        colors={[chroma(bgColor).alpha(.25), chroma(bgColor).alpha(.5), chroma(bgColor).alpha(.75)]}
-                        style={{
-                          ...StyleSheet.absoluteFillObject,
-                          zIndex:0,
-                          justifyContent:"center", alignItems:"center"
-                        }}
-                      >
-                        <View style={{height: '100%', width: '100%'}}>
-                      
-                          <Countdown activeTill={boss.leaveTime.toDate()} type={"BOSS"} />
-                          {/* <Image style={{position: 'absolute', top: '22%', right: 15, zIndex:2, height: 50, width: 50, resizeMode: "contain"}} source={indi}/> */}
+                return (
+                  <View key={boss.name} onLayout={this._onLayoutDidChange}
+                    style={{flex:1, justifyContent:"center", alignItems:"center"}}>
 
-                          <View style={{position: 'absolute', width: 'auto', top: '22%', right: 15, zIndex:2, flexDirection: "row"}}>
-                            {/* {
-                              hasMinRankReq ?
-                              <View>
-                                <Image style={{height: 50, width: 75, resizeMode: "contain"}} source={minRank}/>
-                              </View>
-                              :<></>
-                            } */}
-                            
-                            <View>
+                    {userFightRec != null && userFightRec.defeated ?
+                      <View style={[styles.bossDefeatedView]}>
+                        <Image source={bossDefeatedIcon} style={{tintColor: "white", height: 300, width:300}} />
+                      </View>
+                    :<></>}
+
+                    <TouchableOpacity onPress={() => this.selectBoss(boss)}
+                      rippleColor="rgba(0, 0, 0, 1)"
+                      style={{height: this.state.size.height * .9, width: width * .85}}
+                    >
+                      <ImageBackground blurRadius={.25} style={[styles.imageContainer]}
+                        imageStyle={{resizeMode:"cover"}} source={{uri: boss.img}}>
+                        <LinearGradient
+                          colors={[chroma(bgColor).alpha(.25), chroma(bgColor).alpha(.5), chroma(bgColor).alpha(.75)]}
+                          style={{
+                            ...StyleSheet.absoluteFillObject,
+                            zIndex:0,
+                            justifyContent:"center", alignItems:"center"
+                          }}
+                        >
+                          <View style={{height: '100%', width: '100%'}}>
+                            <Countdown activeTill={boss.leaveTime.toDate()} type={"BOSS"} />
+
+                            <View style={{position: 'absolute', width: 'auto', top: '22%', right: 15, zIndex:2, flexDirection: "row"}}>
                               <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={maxRank}/>
                             </View>
-                          </View>
 
-                          <View style={{position: 'absolute', top: '22%', width: 'auto', left: 15, zIndex:2, flexDirection: "row"}}>
-                            {
-                              hasAMReq ?
-                              <View>
-                                <Image style={{height: 50, width: 75, resizeMode: "contain"}} source={AnimeLogo}/>
-                              </View>
-                              :<></>
-                            }
-                            {
-                              hasMarvelReq ?
+                            <View style={{position: 'absolute', top: '22%', width: 'auto', left: 15, zIndex:2, flexDirection: "row"}}>
+                              {
+                                hasAMReq ?
                                 <View>
-                                  <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={MarvelLogo}/>
+                                  <Image style={{height: 50, width: 75, resizeMode: "contain"}} source={AnimeLogo}/>
                                 </View>
-                              :<></>
-                            }
-                            {
-                              hasDcReq ?
-                              <View>
-                                <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={DCLogo}/>
+                                :<></>
+                              }
+                              {
+                                hasMarvelReq ?
+                                  <View>
+                                    <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={MarvelLogo}/>
+                                  </View>
+                                :<></>
+                              }
+                              {
+                                hasDcReq ?
+                                <View>
+                                  <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={DCLogo}/>
+                                </View>
+                                :<></>
+                              }
+                            </View>
+
+                            <Image style={{...StyleSheet.absoluteFillObject, top: '25%', left: '10%', height: '60%', width: '80%', resizeMode: "contain"}} source={{uri: boss.img}}/>
+                            
+                            <View style={{flex:1, width: width * .85, position:"absolute", bottom: 150 }}>
+                              <Text style={[styles.text, {fontSize: 75, textAlign:"center"}]}>HP: {boss.hp}</Text>
+                              
+                            {/* Points Section */}
+                            <View style={{backgroundColor: chroma('black').alpha(.35)}}>
+                              <View style={styles.pointsView}>
+                                {boss.reward.points != null ?
+                                  <View style={styles.pointsReviewRow}>
+                                    <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
+                                    <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.points}</Text>
+                                  </View>
+                                :<></>}
+
+                                {boss.reward.rankCoins != null ?
+                                  <View style={styles.pointsReviewRow}>
+                                    <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
+                                    <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.rankCoins}</Text>
+                                  </View>
+                                :<></>}
+
+                                {boss.reward.statCoins != null ?
+                                  <View style={styles.pointsReviewRow}>
+                                    <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
+                                    <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.statCoins}</Text>
+                                  </View>
+                                :<></>}
                               </View>
-                              :<></>
-                            }
+                            </View>
+                          
+                            </View>
+
+                            <View style={{flex:1, width: width * .85, position:"absolute", bottom: 25}}>
+                              <Text style={[styles.text, {fontSize: 35, textAlign:"center"}]}>{boss.name}</Text>
+                            </View>
+                        
                           </View>
-
-                          <Image style={{...StyleSheet.absoluteFillObject, top: '25%', left: '10%', height: '60%', width: '80%', resizeMode: "contain"}} source={{uri: boss.img}}/>
-                        </View>
-                      </LinearGradient>
-
-                      <View style={{flex:1, width: width * .85, position:"absolute", bottom: 150 }}>
-                        <Text style={[styles.text, {fontSize: 75, textAlign:"center"}]}>HP: {boss.hp}</Text>
-
-                        {/* Points Section */}
-                        <View style={{backgroundColor: chroma('black').alpha(.35)}}>
-                          <View style={styles.pointsView}>
-                            {boss.reward.points != null ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.points}</Text>
-                              </View>
-                            :<></>}
-
-                            {boss.reward.rankCoins != null ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.rankCoins}</Text>
-                              </View>
-                            :<></>}
-
-                            {boss.reward.statCoins != null ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.statCoins}</Text>
-                              </View>
-                            :<></>}
-                          </View>
-                        </View>
-                      </View>
-
-                      <View style={{flex:1, width: width * .85, position:"absolute", bottom: 25}}>
-                        <Text style={[styles.text, {fontSize: 35, textAlign:"center"}]}>{boss.name}</Text>
-                      </View>
-                    </ImageBackground>
-                  </TouchableOpacity>
-                </View>
-              )
-            })}
-          </Swiper>
+                        </LinearGradient>
+                      </ImageBackground>
+                    </TouchableOpacity>
+                  </View>
+                )
+              })}
+            </Swiper>
+          
+          </>
         }
+        
+        {/* <FAB
+          //small
+          color="white"
+          style={styles.submitFab}
+          icon="store"
+          onPress={() => this.openBossShopScreen()}
+        /> */}
       </>
     );
   }
@@ -349,16 +355,18 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   pointsView:{
-    height:30, flexDirection: "row",
+    height:'auto', flexDirection: "row",
     justifyContent: "center", alignItems:"center",
-    // position: "absolute", top: 0, zIndex: 2,
-    paddingTop: 10, paddingBottom: 10, paddingLeft: 10
+    marginTop: 5,
+    marginBottom: 5
   },
   pointsReviewRow:{
-    width:50,
+    width:'auto',
     flexDirection: "row",
     alignItems:"center",
-    justifyContent: "center"
+    justifyContent: "center",
+    marginLeft: 5,
+    marginRight: 5
   },
   pointsRow:{
     height: 35,
@@ -372,9 +380,17 @@ const styles = StyleSheet.create({
     width: 25,
   },
   statsText:{
-    flex:1,
+    width: 'auto',
     fontFamily:"Edo",
     fontSize:25,
-    marginLeft: 5
+    marginLeft: 5,
+    marginRight: 5
+  },
+  submitFab: {
+    position: 'absolute',
+    zIndex: 2,    
+    right: 8,
+    bottom: 8,
+    backgroundColor: chroma('aqua').hex()
   },
 })

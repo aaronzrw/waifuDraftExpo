@@ -14,7 +14,7 @@ import TopVote from '../assets/images/TopVote.png'
 import Countdown from '../components/CountDown'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
-import {submitVote} from '../redux/actions/dataActions'
+import {submitVote, getRankColor} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -251,7 +251,6 @@ export default class VoteDetails extends Component {
     var validVote = true;
 
     var rank = 1;
-    var rankColor = "#ff0000";
     var nextRankMinBid = 0;
 
     switch(this.state.waifu.husbandoId){
@@ -268,18 +267,15 @@ export default class VoteDetails extends Component {
 
         if (this.state.topVote.vote < 50){
           rank = 1
-          rankColor = "#835220"
           nextRankMinBid = 50 - currVote;
         }
-        else if(this.state.topVote.vote < 75){
-          rank = 2
-          rankColor = "#7b7979"
-          nextRankMinBid = 75 - currVote;
-        }
         else if(this.state.topVote.vote < 100){
-          rank = 3
-          rankColor = "#b29600"
+          rank = 2
           nextRankMinBid = 100 - currVote;
+        }
+        else if(this.state.topVote.vote < 200){
+          rank = 3
+          nextRankMinBid = 200 - currVote;
         }
         else{
           rank = 4
@@ -289,7 +285,6 @@ export default class VoteDetails extends Component {
         minPoints = 1
         if (currVote < 25){
           rank = 1
-          rankColor = "#835220"
           nextRankMinBid = 50 - currVote;
         }
         else{
@@ -297,7 +292,7 @@ export default class VoteDetails extends Component {
         }
         break;
     }
-
+    
     var userVote = this.state.voteCount <= minPoints ? minPoints : this.state.voteCount;
     validVote = (currVote + userVote) >= minPoints &&  userVote <= this.state.userInfo.points;
 
@@ -351,7 +346,7 @@ export default class VoteDetails extends Component {
                               <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
                                 <Button
                                   mode="contained"
-                                  color={chroma(rankColor).hex()}
+                                  color={chroma(getRankColor(this.state.waifu.rank + 1)).hex()}
                                   style={{ fontFamily:"Edo", flex: .75, width: width/1.5 }}
                                   onPress={() => this.setState({ showConf: true, nextRankMinBid: nextRankMinBid})}
                                 >

@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
+import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
@@ -20,6 +20,10 @@ import atkIcon from '../assets/images/atkIcon.png'
 import ChestOpen from '../assets/images/ChestOpen.gif'
 import ChestShake from '../assets/images/ChestShake.gif'
 
+import animeIcon from '../assets/images/AnimeLogo.png'
+import marvelIcon from '../assets/images/MarvelLogo.png'
+import dcIcon from '../assets/images/DCLogo.png'
+
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch'
@@ -32,6 +36,7 @@ import {
 } from '../redux/types';
 
 
+import { getRankColor } from '../redux/actions/dataActions'
 import { logoutUser } from '../redux/actions/userActions'
 
 //Component
@@ -40,55 +45,6 @@ import RankBackground from '../components/RankBackGround'
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
-function setDay(date, dayOfWeek) {
-  let Rdate = new Date(date.getTime());
-  Rdate.setDate(Rdate.getDate() + (dayOfWeek + 7 - Rdate.getDay()) % 7);
-  return Rdate;
-}
-
-function getRankByVotes(voteCount){
-  var rank = 1;
-  if (voteCount < 50){
-    rank = 1
-  }
-  else if(voteCount >= 50 && voteCount <= 75){
-    rank = 2
-  }
-  else if(voteCount >= 76 && voteCount <= 150){
-    rank = 3
-  }
-  else if(voteCount > 150){
-    rank = 4
-  }
-
-  return rank;
-}
-
-function getBaseStats(rank) {
-  let stats = {
-    attack: 1,
-    defense: 1
-  };
-  switch (rank) {
-    case 1:
-      stats.attack = 3;
-      stats.defense = 1;
-      break;
-    case 2:
-      stats.attack = 7;
-      stats.defense = 5;
-      break;
-    case 3:
-      stats.attack = 12;
-      stats.defense = 10;
-      break;
-    case 4:
-      stats.attack = 20;
-      stats.defense = 15;
-      break;
-  }
-  return stats;
-}
 
 export default class Profile extends Component {
   constructor(props) {
@@ -105,7 +61,7 @@ export default class Profile extends Component {
 			loading: store.getState().data.loading,
       waifuList: store.getState().data.waifuList,
       userInfo: store.getState().user.credentials,
-      waifus: store.getState().user.waifus,
+      waifus: _.cloneDeep(store.getState().user.waifus),
       users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
       showUpdateUserName: false,
       showEmailUpdate: false,
@@ -119,6 +75,7 @@ export default class Profile extends Component {
       newPass: null,
       newConfPass: null,
       chestOpen: false,
+      waifuType: "All",
       size: {width,height}
     };
 
@@ -136,6 +93,8 @@ export default class Profile extends Component {
     this.checkDailyBonus = this.checkDailyBonus.bind(this)
     
     this.addNewDaily = this.addNewDaily.bind(this)
+    this.addFavoritieSeries = this.addFavoritieSeries.bind(this)
+    this.changeFabState = this.changeFabState.bind(this)
     this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
@@ -349,21 +308,40 @@ export default class Profile extends Component {
   }
 
   getRandWaifu(characters) {
-    let randChanceList = _.fill(Array(50), 1).concat(_.fill(Array(25), 2)).concat(_.fill(Array(25), 3));
-    let randItem = _.shuffle(randChanceList)[Math.floor(Math.random() * randChanceList.length)];
-    let charSet = [];
-    switch (randItem) {
-      case 1:
-        charSet = characters['Anime-Manga'].items;
-        break;
-      case 2:
-        charSet = characters['Marvel'].items;
-        break;
-      case 3:
-        charSet = characters['DC'].items;
-        break;
-    }
-    return _.shuffle(charSet)[Math.floor(Math.random() * charSet.length)];
+    return _.shuffle(characters)[Math.floor(Math.random() * characters.length)];
+  }
+
+  async addFavoritieSeries(){
+    // var dailies = await firebase.firestore().collection('waifuPoll').get()
+    // dailies.forEach(x => {
+    //   console.log(`Setting ${x.data().name}`)
+
+    //   var id = x.data().waifuId;
+    //   var waifu = x.data();
+
+    //   delete waifu.waifuId;
+    //   delete waifu.votes
+    //   firebase.firestore().collection('waifus').doc(id).set(waifu)
+    //   //x.ref.delete()
+    // })
+    var weeklies = await firebase.firestore().collection('waifus')
+    .where("husbandoId","==","Weekly").get()
+    weeklies.forEach(x => {
+      if(x.data().name != "Aunt May"){
+        console.log(`Deleting ${x.data().name}`)
+        x.ref.delete()
+      }
+
+      // var waifu = x.data();
+      // waifu.waifuId = x.ref.id;
+      // waifu.votes = [];
+      // firebase.firestore().collection('waifuPoll').add(waifu)
+    })
+    // .then(async (userDocs) => {
+    //   userDocs.forEach(x => {
+    //     x.ref.update({ favoriteSeries: [] })
+    //   });
+    // });
   }
   
   recreateWeeklyPoll(){
@@ -400,9 +378,7 @@ export default class Profile extends Component {
       docs.forEach(x => {
         waifus.push({docId: x.id, ...x.data()})
       });
-
-      (await firebase.firestore().collection('waifus-bk').get()).docs.map(x => x.ref.delete())
-      
+            
       waifus.forEach(async x => {
         var id = x.docId;
         var waifu = _.cloneDeep(x);
@@ -447,8 +423,26 @@ export default class Profile extends Component {
     }
   }
 
+  changeFabState(){
+    var fabState = this.state.fabOpen;
+    this.setState({fabOpen: !fabState})
+  }
+
   render(){
     var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
+
+    switch(this.state.waifuType){
+      case "Anime-Manga":
+        waifus = waifus.filter(x => x.type == "Anime-Manga")
+        break;
+      case "Marvel":
+        waifus = waifus.filter(x => x.type == "Marvel")
+        break;
+      case "DC":
+        waifus = waifus.filter(x => x.type == "DC")
+        break;
+    }
+
     var waifuGroups = _.chain(waifus)
     .orderBy((o) => (o.attack + o.defense), ['desc'])
     .groupBy(waifu => Number(waifu.rank))
@@ -458,6 +452,12 @@ export default class Profile extends Component {
 
     waifus = waifuGroups.flatMap(x => x.waifus)
 
+    var trades = _.orderBy(_.cloneDeep(this.state.trades), ['createdDate'], ['desc'])
+
+    var activeTrades = _.cloneDeep(trades.filter(x => x.status == "Active"))
+    var completedTrades = _.cloneDeep(trades.filter(x => x.status != "Active"))
+
+    trades = activeTrades.concat(completedTrades);
     return (
       <>
         {this.state.loading ?
@@ -534,6 +534,14 @@ export default class Profile extends Component {
                     <View style={{height: 50, width: width}}>
                       <Button
                         mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.addFavoritieSeries}
+                      >
+                        Add Favorite Series
+                      </Button>
+                    </View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                         onPress={this.createWaifuBackUp}
                       >
                         Create Waifu BackUp
@@ -586,6 +594,7 @@ export default class Profile extends Component {
                           <Text style={[styles.text]}>To</Text>
                         </View>
                       </View>
+                      
                       <View style={{flex: 1, flexDirection:"row"}}>
                         <View style={{flex: 1, justifyContent: "center", alignItems:"center"}}>
                           <View style={[styles.tradeUserImg]}>
@@ -600,6 +609,13 @@ export default class Profile extends Component {
                         </View>
                       </View>
                       
+                      <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
+                          <View style={{flex: 1}}>
+                            <Text style={[styles.text, {fontSize: 20}]}>
+                              {item.createdDate.toDateString()}
+                            </Text>
+                          </View>
+                        </View>
                     </TouchableOpacity>
                   )
                 }}
@@ -608,7 +624,7 @@ export default class Profile extends Component {
           
             <View style={styles.waifuListView}>
               <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
-                <Text style={styles.text}>WAIFUS</Text>
+              <Text style={styles.text}>WAIFUS - {waifus.length}</Text>
               </View>
               <FlatGrid
                 itemDimension={150}
@@ -618,21 +634,7 @@ export default class Profile extends Component {
                 // fixed
                 spacing={20}
                 renderItem={({item, index}) => {
-                  var rankColor = ""
-                  switch(item.rank){
-                    case 1:
-                      rankColor = "#ff0000"
-                      break;
-                    case 2:
-                      rankColor = "#835220"
-                      break;
-                    case 3:
-                      rankColor = "#7b7979"
-                      break;
-                    case 4:
-                      rankColor = "#b29600"
-                      break;
-                  }
+                  var rankColor = getRankColor(item.rank)
 
                   return(
                     <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
@@ -664,13 +666,57 @@ export default class Profile extends Component {
                 }}
               />
 
-              <FAB
-                small
-                color="white"
-                style={styles.favFab}
-                icon="heart-box"
-                onPress={() => this.openUserFavoritesScreen()}
+              <FAB.Group
+                fabStyle={{backgroundColor: chroma('aqua').hex()}}
+                open={this.state.fabOpen}
+                icon={'settings'}
+                actions={[
+                  { icon: 'heart-box',
+                    label: 'Show Favorited Waifus',
+                    onPress: () => this.openUserFavoritesScreen()
+                  },
+                  { icon: 'account-multiple-outline',
+                    label: 'Show All Waifus',
+                    onPress: () => this.setState({waifuType: "All"})
+                  },
+                  {
+                    icon: ({ size, color }) =>
+                       (
+                        <Image
+                          source={animeIcon}
+                          style={{ width: size , height: size}}
+                        />
+                      ),
+                    // icon: {marvelIcon},
+                    label: 'Show Anime Waifus',
+                    onPress: () => this.setState({waifuType: "Anime-Manga"})
+                  },
+                  {
+                    icon: ({ size, color }) =>
+                       (
+                        <Image
+                          source={marvelIcon}
+                          style={{ width: size , height: size}}
+                        />
+                      ),
+                    label: 'Show Marvel Waifus',
+                    onPress: () => this.setState({waifuType: "Marvel"})
+                  },
+                  {
+                    icon: ({ size, color }) =>
+                       (
+                        <Image
+                          source={dcIcon}
+                          style={{ width: size , height: size}}
+                        />
+                      ),
+                    label: 'Show DC Waifus',
+                    onPress: () => this.setState({waifuType: "DC"})
+                  },
+                ]}
+                onStateChange={() => this.changeFabState()}
               />
+        
             </View>
           </Swiper>
         }

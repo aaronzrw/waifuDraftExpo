@@ -25,6 +25,7 @@ export const SUBMIT_WAIFU = 'SUBMIT_WAIFU';
 export const SET_WAIFU_LIST = 'SET_WAIFU_LIST';
 export const SET_TRADES = 'SET_TRADES';
 export const SET_GAUNTLET = 'SET_GAUNTLET';
+export const SET_BOSS_ITEMS = 'SET_BOSS_ITEMS';
 
 //Chat reducer types
 export const SET_CHATS = 'SET_CHATS';

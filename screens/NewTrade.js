@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, FAB, TouchableRipple, Card, Button } from 'react-native-paper';
+import { Text, FAB, TouchableRipple, Card, Button, Avatar } from 'react-native-paper';
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
@@ -24,11 +24,24 @@ import {
 
 //Component
 import RankBackground from '../components/RankBackGround'
-import { submitTrade } from '../redux/actions/dataActions';
+import { submitTrade, getRankColor } from '../redux/actions/dataActions';
 
 const chroma = require('chroma-js')
 const favoriteHeart = require('../assets/images/FavoriteHeart.png')
 const { width, height } = Dimensions.get('window');
+
+const StatAvatar = (props) => {
+
+  if(props.value == 0)
+    return <></>
+
+  return (
+    <View style={{alignSelf:"center", justifyContent: 'center', height: 75, margin: 8}}>
+      <Avatar.Icon size={50} icon={props.icon} color={'white'} style={{backgroundColor: 'transparent'}}/>
+      <Text style={[ styles.statsText, {color: "white", textAlign: 'center'}]}>{props.value}</Text>
+    </View>
+  )
+};
 
 export default class NewTrade extends Component {
   constructor(props) {
@@ -148,11 +161,11 @@ export default class NewTrade extends Component {
     }
 
     // if(from.points != 0 || from.submitSlots != 0 || from.waifus.length != 0)
-    if(from.points != 0 || from.waifus.length != 0)
+    if(from.points != 0 || from.rankCoins != 0 || from.statCoins != 0 || from.waifus.length != 0)
       fromTradeIsValid = true
 
     // if(to.points != 0 || to.submitSlots != 0 || to.waifus.length != 0)
-    if(to.points != 0  || to.waifus.length != 0)
+    if(to.points != 0  || to.rankCoins != 0 || to.statCoins != 0 ||  to.waifus.length != 0)
       toTradeIsValid = true
 
     this.setState({tradeFrom: from, tradeTo: to, fromTradeIsValid, toTradeIsValid})
@@ -217,230 +230,7 @@ export default class NewTrade extends Component {
               style={{backgroundColor: "white"}}
               ref='swiper'
             >
-              <View style={styles.waifuListView}>
-                {/* points/coins section */}
-                <View style={styles.tradePointsView}>
-                  {/* Points */}
-                  <View style={styles.pointsRow}>
-                    <View style={{flex: .4}}>
-                      <Text style={[styles.text, {color: "white"}]}>Points</Text>
-                    </View>
-                    <NumericInput value={this.state.tradeFrom.points}
-                      onChange={count => {
-                        var from = this.state.tradeFrom;
-                        from.points = count;
-                        
-                        var fromTradeIsValid = false;
-                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                          fromTradeIsValid = true
-
-                        this.setState({tradeFrom: from, fromTradeIsValid})
-                      }}
-                      rounded
-                      minValue={0}
-                      maxValue={this.state.userInfo.points}
-                      totalHeight={35}
-                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      separatorWidth={0}
-                      inputStyle={{ 
-                        fontFamily:"Edo",
-                        fontSize: 25,
-                      }}
-                      containerStyle={{ 
-                        flex:.6,
-                        backgroundColor: chroma('white').alpha(.5).hex(),
-                        borderWidth: 1,
-                        borderColor: chroma('black').alpha(.25).hex(),
-                      }}
-                    />
-                  </View>
-                  
-                  {/* Submit Slots */}
-                  {/* <View style={styles.pointsRow}>
-                    <View style={{flex: .6}}>
-                      <Text style={[styles.text, {color: "white"}]}>Submit Slots</Text>
-                    </View>
-                    <NumericInput value={this.state.tradeFrom.submitSlots}
-                      onChange={count => {
-                        var from = this.state.tradeFrom;
-                        from.submitSlots = count;
-                        
-                        var fromTradeIsValid = false;
-                        if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                          fromTradeIsValid = true
-
-                        this.setState({tradeFrom: from, fromTradeIsValid})
-                      }}
-                      rounded
-                      minValue={0} 
-                      maxValue={this.state.userInfo.submitSlots}
-                      totalHeight={35}
-                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      separatorWidth={0}
-                      inputStyle={{ 
-                        fontFamily:"Edo",
-                        fontSize: 25,
-                      }}
-                      containerStyle={{ 
-                        flex:.4,
-                        width: width/2.25,
-                        backgroundColor: chroma('white').alpha(.5).hex(),
-                        borderWidth: 1,
-                        borderColor: chroma('black').alpha(.25).hex(),
-                      }}
-                    />
-                  </View>
-                   */}
-                  {/* Rank Coins */}
-                  <View style={styles.pointsRow}>
-                    <View style={{flex: .6}}>
-                      <Text style={[styles.text, {color: "white"}]}>Rank Coins</Text>
-                    </View>
-                    <NumericInput value={this.state.tradeFrom.rankCoins}
-                      onChange={count => {
-                        var from = this.state.tradeFrom;
-                        from.rankCoins = count;
-                        
-                        var fromTradeIsValid = false;
-                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                          fromTradeIsValid = true
-
-                        this.setState({tradeFrom: from, fromTradeIsValid})
-                      }}
-                      rounded
-                      minValue={0} 
-                      maxValue={this.state.userInfo.rankCoins}
-                      totalHeight={35}
-                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      separatorWidth={0}
-                      inputStyle={{ 
-                        fontFamily:"Edo",
-                        fontSize: 25,
-                      }}
-                      containerStyle={{ 
-                        flex:.4,
-                        width: width/2.25,
-                        backgroundColor: chroma('white').alpha(.5).hex(),
-                        borderWidth: 1,
-                        borderColor: chroma('black').alpha(.25).hex(),
-                      }}
-                    />
-                  </View>
-                  
-                  {/* Stat Coins */}
-                  <View style={styles.pointsRow}>
-                    <View style={{flex: .6}}>
-                      <Text style={[styles.text, {color: "white"}]}>Stat Coins</Text>
-                    </View>
-                    <NumericInput value={this.state.tradeFrom.statCoins}
-                      onChange={count => {
-                        var from = this.state.tradeFrom;
-                        from.statCoins = count;
-                        
-                        var fromTradeIsValid = false;
-                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
-                          fromTradeIsValid = true
-
-                        this.setState({tradeFrom: from, fromTradeIsValid})
-                      }}
-                      rounded
-                      minValue={0} 
-                      maxValue={this.state.userInfo.statCoins}
-                      totalHeight={35}
-                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      separatorWidth={0}
-                      inputStyle={{ 
-                        fontFamily:"Edo",
-                        fontSize: 25,
-                      }}
-                      containerStyle={{ 
-                        flex:.4,
-                        width: width/2.25,
-                        backgroundColor: chroma('white').alpha(.5).hex(),
-                        borderWidth: 1,
-                        borderColor: chroma('black').alpha(.25).hex(),
-                      }}
-                    />
-                  </View>
-                </View>
-
-                <FlatGrid
-                  itemDimension={150}
-                  items={userWaifus}
-                  style={styles.gridView}
-                  // staticDimension={300}
-                  // fixed
-                  spacing={20}
-                  renderItem={({item, index}) => {
-                    var isSelected = this.state.tradeFrom.waifus.includes(item.waifuId)
-                    var rankColor = ""
-                    switch(item.rank){
-                      case 1:
-                        rankColor = "#ff0000"
-                        break;
-                      case 2:
-                        rankColor = "#835220"
-                        break;
-                      case 3:
-                        rankColor = "#7b7979"
-                        break;
-                      case 4:
-                        rankColor = "#b29600"
-                        break;
-                    }
-
-                    return(
-                      <TouchableOpacity activeOpacity={.25}
-                        onPress={() => this.selectWaifu('from', item)}
-                        style={[styles.itemContainer]}
-                      >
-                        <View style={styles.statView}>
-                          <View style={styles.statRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
-                          </View>
-                          <View style={styles.statRow}>
-                            <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
-                          </View>
-                        </View>
-
-                        <Image
-                          style={{
-                            opacity: isSelected ? 1 : .25,
-                            flex: 1,
-                            aspectRatio: 1,
-                            resizeMode: "cover",
-                            borderRadius: 10,
-                            ...StyleSheet.absoluteFillObject,
-                            
-                          }}
-                          source={{uri: item.img}}
-                        />
-                        <RankBackground rank={item.rank} name={item.name} />
-                      </TouchableOpacity>
-                    )
-                  }}
-                />
-
-                <View style={{height: 50, width: width}}>
-                  <Button
-                    disabled={!this.state.fromTradeIsValid}
-                    mode={"contained"} color={chroma('aqua').hex()}
-                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                    onPress={() => this.handleSlideChange('next')}
-                  >Continue</Button>
-                </View>
-              </View>
-            
-              <View style={styles.waifuListView}>
+              <ImageBackground style={styles.waifuListView} blurRadius={.25} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.otherUser.img}}>
                 {/* points/coins section */}
                 <View style={styles.tradePointsView}>
                   {/* Points */}
@@ -480,43 +270,6 @@ export default class NewTrade extends Component {
                     />
                   </View>
                   
-                  {/* Submit Slots */}
-                  {/* <View style={{flexDirection: "row"}}>
-                    <View style={{flex: .6}}>
-                      <Text style={[styles.text, {color: "white"}]}>Submit Slots</Text>
-                    </View>
-                    <NumericInput value={this.state.tradeTo.submitSlots}
-                      onChange={count => {
-                        var to = this.state.tradeTo;
-                        to.submitSlots = count;
-                        
-                        var toTradeIsValid = false;
-                        if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
-                          toTradeIsValid = true
-
-                        this.setState({tradeTo: to, toTradeIsValid})
-                      }}
-                      rounded
-                      minValue={0} 
-                      maxValue={this.state.otherUser.submitSlots}
-                      totalHeight={35}
-                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                      separatorWidth={0}
-                      inputStyle={{ 
-                        fontFamily:"Edo",
-                        fontSize: 25,
-                      }}
-                      containerStyle={{ 
-                        flex:.4,
-                        width: width/2.25,
-                        backgroundColor: chroma('white').alpha(.5).hex(),
-                        borderWidth: 1,
-                        borderColor: chroma('black').alpha(.25).hex(),
-                      }}
-                    />
-                  </View>
-                 */}
                   {/* Rank Coins */}
                   <View style={styles.pointsRow}>
                     <View style={{flex: .6}}>
@@ -604,24 +357,10 @@ export default class NewTrade extends Component {
                   renderItem={({item, index}) => {
                     var isFav = this.state.userInfo.wishList.includes(item.link)
                     var isSelected = this.state.tradeTo.waifus.includes(item.waifuId)
-                    var rankColor = ""
-                    switch(item.rank){
-                      case 1:
-                        rankColor = "#ff0000"
-                        break;
-                      case 2:
-                        rankColor = "#835220"
-                        break;
-                      case 3:
-                        rankColor = "#7b7979"
-                        break;
-                      case 4:
-                        rankColor = "#b29600"
-                        break;
-                    }
+                    var rankColor = getRankColor(item.rank)
 
                     return(
-                      <TouchableOpacity activeOpacity={.25}
+                      <TouchableOpacity activeOpacity={.5}
                         onPress={() => this.selectWaifu('to', item)}
                         style={[styles.itemContainer]}
                       >
@@ -646,7 +385,8 @@ export default class NewTrade extends Component {
 
                         <Image
                           style={{
-                            opacity: isSelected ? 1 : .25,
+                            opacity: isSelected ? 1 : .5,
+                            backgroundColor: chroma('black'),
                             flex: 1,
                             aspectRatio: 1,
                             resizeMode: "cover",
@@ -662,6 +402,216 @@ export default class NewTrade extends Component {
                   }}
                 />
                 
+                <View style={{height: 50, width: width}}>
+                  <Button
+                    disabled={!this.state.fromTradeIsValid}
+                    mode={"contained"} color={chroma('aqua').hex()}
+                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                    onPress={() => this.handleSlideChange('next')}
+                  >Continue</Button>
+                </View>
+              </ImageBackground>
+              
+              <ImageBackground style={styles.waifuListView} blurRadius={.25} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.userInfo.img}}>
+                {/* points/coins section */}
+                <View style={styles.tradePointsView}>
+                  {/* Points */}
+                  <View style={styles.pointsRow}>
+                    <View style={{flex: .4}}>
+                      <Text style={[styles.text, {color: "white"}]}>Points</Text>
+                    </View>
+                    <NumericInput value={this.state.tradeFrom.points}
+                      onChange={count => {
+                        var from = this.state.tradeFrom;
+                        from.points = count;
+                        
+                        var fromTradeIsValid = false;
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                          fromTradeIsValid = true
+
+                        this.setState({tradeFrom: from, fromTradeIsValid})
+                      }}
+                      rounded
+                      minValue={0}
+                      maxValue={this.state.userInfo.points}
+                      totalHeight={35}
+                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      separatorWidth={0}
+                      inputStyle={{ 
+                        fontFamily:"Edo",
+                        fontSize: 25,
+                      }}
+                      containerStyle={{ 
+                        flex:.6,
+                        backgroundColor: chroma('white').alpha(.5).hex(),
+                        borderWidth: 1,
+                        borderColor: chroma('black').alpha(.25).hex(),
+                      }}
+                    />
+                  </View>
+                  
+                  {/* Submit Slots */}
+                  {/* <View style={styles.pointsRow}>
+                    <View style={{flex: .6}}>
+                      <Text style={[styles.text, {color: "white"}]}>Submit Slots</Text>
+                    </View>
+                    <NumericInput value={this.state.tradeFrom.submitSlots}
+                      onChange={count => {
+                        var from = this.state.tradeFrom;
+                        from.submitSlots = count;
+                        
+                        var fromTradeIsValid = false;
+                        if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                          fromTradeIsValid = true
+
+                        this.setState({tradeFrom: from, fromTradeIsValid})
+                      }}
+                      rounded
+                      minValue={0} 
+                      maxValue={this.state.userInfo.submitSlots}
+                      totalHeight={35}
+                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      separatorWidth={0}
+                      inputStyle={{ 
+                        fontFamily:"Edo",
+                        fontSize: 25,
+                      }}
+                      containerStyle={{ 
+                        flex:.4,
+                        width: width/2.25,
+                        backgroundColor: chroma('white').alpha(.5).hex(),
+                        borderWidth: 1,
+                        borderColor: chroma('black').alpha(.25).hex(),
+                      }}
+                    />
+                  </View>
+                    */}
+                  {/* Rank Coins */}
+                  <View style={styles.pointsRow}>
+                    <View style={{flex: .6}}>
+                      <Text style={[styles.text, {color: "white"}]}>Rank Coins</Text>
+                    </View>
+                    <NumericInput value={this.state.tradeFrom.rankCoins}
+                      onChange={count => {
+                        var from = this.state.tradeFrom;
+                        from.rankCoins = count;
+                        
+                        var fromTradeIsValid = false;
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                          fromTradeIsValid = true
+
+                        this.setState({tradeFrom: from, fromTradeIsValid})
+                      }}
+                      rounded
+                      minValue={0} 
+                      maxValue={this.state.userInfo.rankCoins}
+                      totalHeight={35}
+                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      separatorWidth={0}
+                      inputStyle={{ 
+                        fontFamily:"Edo",
+                        fontSize: 25,
+                      }}
+                      containerStyle={{ 
+                        flex:.4,
+                        width: width/2.25,
+                        backgroundColor: chroma('white').alpha(.5).hex(),
+                        borderWidth: 1,
+                        borderColor: chroma('black').alpha(.25).hex(),
+                      }}
+                    />
+                  </View>
+                  
+                  {/* Stat Coins */}
+                  <View style={styles.pointsRow}>
+                    <View style={{flex: .6}}>
+                      <Text style={[styles.text, {color: "white"}]}>Stat Coins</Text>
+                    </View>
+                    <NumericInput value={this.state.tradeFrom.statCoins}
+                      onChange={count => {
+                        var from = this.state.tradeFrom;
+                        from.statCoins = count;
+                        
+                        var fromTradeIsValid = false;
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                          fromTradeIsValid = true
+
+                        this.setState({tradeFrom: from, fromTradeIsValid})
+                      }}
+                      rounded
+                      minValue={0} 
+                      maxValue={this.state.userInfo.statCoins}
+                      totalHeight={35}
+                      leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                      separatorWidth={0}
+                      inputStyle={{ 
+                        fontFamily:"Edo",
+                        fontSize: 25,
+                      }}
+                      containerStyle={{ 
+                        flex:.4,
+                        width: width/2.25,
+                        backgroundColor: chroma('white').alpha(.5).hex(),
+                        borderWidth: 1,
+                        borderColor: chroma('black').alpha(.25).hex(),
+                      }}
+                    />
+                  </View>
+                </View>
+
+                <FlatGrid
+                  itemDimension={150}
+                  items={userWaifus}
+                  style={styles.gridView}
+                  // staticDimension={300}
+                  // fixed
+                  spacing={20}
+                  renderItem={({item, index}) => {
+                    var isSelected = this.state.tradeFrom.waifus.includes(item.waifuId)
+                    var rankColor = getRankColor(item.rank)
+
+                    return(
+                      <TouchableOpacity activeOpacity={.5}
+                        onPress={() => this.selectWaifu('from', item)}
+                        style={[styles.itemContainer]}
+                      >
+                        <View style={styles.statView}>
+                          <View style={styles.statRow}>
+                            <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
+                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
+                          </View>
+                          <View style={styles.statRow}>
+                            <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
+                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
+                          </View>
+                        </View>
+
+                        <Image
+                          style={{
+                            opacity: isSelected ? 1 : .5,
+                            backgroundColor: chroma('black'),
+                            flex: 1,
+                            aspectRatio: 1,
+                            resizeMode: "cover",
+                            borderRadius: 10,
+                            ...StyleSheet.absoluteFillObject,
+                            
+                          }}
+                          source={{uri: item.img}}
+                        />
+                        <RankBackground rank={item.rank} name={item.name} />
+                      </TouchableOpacity>
+                    )
+                  }}
+                />
+
                 <View style={styles.buttonRowView}>
                   <View style={styles.buttonItem}>
                     <Button
@@ -684,182 +634,34 @@ export default class NewTrade extends Component {
                     </Button>
                   </View>
                 </View>
-              </View>
+              </ImageBackground>
             
-              <View style={styles.waifuListView}>
+              <View style={styles.waifuListView} >
                 <View style={{flex: 1, width: width}}>
-                  {/* From Section */}
-                  <View style={{flex: 1, width: width}}>
-                    <View style={{backgroundColor: chroma('black').alpha(.35)}}>
-                      <Text style={[styles.text, {color: "white", textAlign: "center"}]}>{this.state.userInfo.userName} - FROM</Text>
-                      
-                      {/* Points Section */}
-                      {
-                        this.state.tradeFrom.points > 0 || this.state.tradeFrom.rankCoins > 0 || this.state.tradeFrom.statCoins > 0 ?
-                          <View style={styles.pointsView}>
-                            {this.state.tradeFrom.points > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.points}</Text>
-                              </View>
-                            :<></>}
-                            {/* {this.state.tradeFrom.submitSlots > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.submitSlots}</Text>
-                              </View>
-                            :<></>} */}
-                            {this.state.tradeFrom.rankCoins > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.rankCoins}</Text>
-                              </View>
-                            :<></>}
-                            {this.state.tradeFrom.statCoins > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.statCoins}</Text>
-                              </View>
-                            :<></>}
-                          </View>
-                        : <></>
-                      }
-                    </View>
-                    <View style={{flex: 1, width: width}}>
-                      <FlatGrid
-                        itemDimension={150}
-                        items={userWaifus.filter(x => this.state.tradeFrom.waifus.includes(x.waifuId))}
-                        style={styles.gridView}
-                        spacing={20}
-                        renderItem={({item, index}) => {
-                          var isFav = this.state.userInfo.wishList.includes(item.link)
-                          var rankColor = ""
-                          switch(item.rank){
-                            case 1:
-                              rankColor = "#ff0000"
-                              break;
-                            case 2:
-                              rankColor = "#835220"
-                              break;
-                            case 3:
-                              rankColor = "#7b7979"
-                              break;
-                            case 4:
-                              rankColor = "#b29600"
-                              break;
-                          }
-
-                          return(
-                            <View style={[styles.itemContainer]}>
-                              {
-                                isFav ?
-                                  <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
-                                    <Image style={{height:25, width: 25}} source={favoriteHeart} />
-                                  </View>
-                                : <></>
-                              }
-
-                              <View style={styles.pointsView}>
-                                <View style={styles.statRow}>
-                                  <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                                  <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
-                                </View>
-                                <View style={styles.statRow}>
-                                  <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                                  <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
-                                </View>
-                              </View>
-
-                              <Image
-                                style={{
-                                  flex: 1,
-                                  aspectRatio: 1,
-                                  resizeMode: "cover",
-                                  borderRadius: 10,
-                                  ...StyleSheet.absoluteFillObject,
-                                }}
-                                source={{uri: item.img}}
-                              />
-                              <RankBackground rank={item.rank} name={item.name} />
-                            </View>
-                          )
-                        }}
-                      />
-                    </View>
-                  </View>
-                  
                   {/* To Section */}
                   <View style={{flex: 1, width: width}}>
                     <View style={{backgroundColor: chroma('black').alpha(.35)}}>
-                      <Text style={[styles.text, {color: "white", textAlign: "center"}]}>{this.state.otherUser.userName} - TO</Text>
-                      
-                      {/* Points Section */}
-                      {
-                        this.state.tradeTo.points > 0 || this.state.tradeTo.rankCoins > 0 || this.state.tradeTo.statCoins > 0 ?
-                          <View style={styles.pointsView}>
-                            {this.state.tradeTo.points > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.points}</Text>
-                              </View>
-                            :<></>}
-                            {/* {this.state.tradeTo.submitSlots > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.submitSlots}</Text>
-                              </View>
-                            :<></>} */}
-                            {this.state.tradeTo.rankCoins > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.rankCoins}</Text>
-                              </View>
-                            :<></>}
-                            {this.state.tradeTo.statCoins > 0 ?
-                              <View style={styles.pointsReviewRow}>
-                                <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
-                                <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.statCoins}</Text>
-                              </View>
-                            :<></>}
-                          </View>
-                        : <></>
-                      }
+                      <Text style={[styles.text, {color: "white", textAlign: "center"}]}>TO - {this.state.otherUser.userName}</Text>
                     </View>
 
-                    <View style={{flex: 1, width: width}}>
+                    <ImageBackground style={{flex: 1, width: width, backgroundColor: chroma('black')}} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.otherUser.img}}>
+                      <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, marginLeft: width - 50, width: 50,
+                          backgroundColor: chroma('silver').alpha(.15), justifyContent:"center", alignItems:"center"}}>
+                        <StatAvatar icon={pointsIcon} value={this.state.tradeTo.points} />
+                        <StatAvatar icon={statCoinIcon} value={this.state.tradeTo.statCoins} />
+                        <StatAvatar icon={rankCoinIcon} value={this.state.tradeTo.rankCoins} />
+                      </View>
+
                       <FlatGrid
                         itemDimension={150}
-                        items={otherUserWaifus.filter(x => this.state.tradeTo.waifus.includes(x.waifuId))}
+                        items={this.state.waifuList.filter(x => this.state.tradeTo.waifus.map(x => x.waifuId).includes(x.waifuId))}
                         style={styles.gridView}
                         spacing={20}
                         renderItem={({item, index}) => {
-                          var isFav = this.state.userInfo.wishList.includes(item.link)
-                          var rankColor = ""
-                          switch(item.rank){
-                            case 1:
-                              rankColor = "#ff0000"
-                              break;
-                            case 2:
-                              rankColor = "#835220"
-                              break;
-                            case 3:
-                              rankColor = "#7b7979"
-                              break;
-                            case 4:
-                              rankColor = "#b29600"
-                              break;
-                          }
+                          var rankColor = getRankColor(item.rank)
 
                           return(
                             <View style={[styles.itemContainer]}>
-                              {
-                                isFav ?
-                                  <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
-                                    <Image style={{height:25, width: 25}} source={favoriteHeart} />
-                                  </View>
-                                : <></>
-                              }
-
                               <View style={styles.statView}>
                                 <View style={styles.statRow}>
                                   <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
@@ -886,7 +688,60 @@ export default class NewTrade extends Component {
                           )
                         }}
                       />
+                    </ImageBackground>
+                  </View>
+                
+                  {/* From Section */}
+                  <View style={{flex: 1, width: width}}>
+                    <View style={{backgroundColor: chroma('black').alpha(.35)}}>
+                      <Text style={[styles.text, {color: "white", textAlign: "center"}]}>FROM - {this.state.userInfo.userName}</Text>
                     </View>
+                    
+                    <ImageBackground style={{flex: 1, width: width, backgroundColor: chroma('black')}} imageStyle={{resizeMode:"cover", opacity: .5}} source={{uri: this.state.userInfo.img}}>
+                      <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, marginLeft: width - 50, width: 50,
+                        backgroundColor: chroma('silver').alpha(.15), justifyContent:"center", alignItems:"center"}}>
+                        <StatAvatar icon={pointsIcon} value={this.state.tradeFrom.points} />
+                        <StatAvatar icon={statCoinIcon} value={this.state.tradeFrom.statCoins} />
+                        <StatAvatar icon={rankCoinIcon} value={this.state.tradeFrom.rankCoins} />
+                      </View>
+                      
+                      <FlatGrid
+                        itemDimension={150}
+                        items={this.state.waifuList.filter(x => this.state.tradeFrom.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                        style={styles.gridView}
+                        spacing={20}
+                        renderItem={({item, index}) => {
+                          var rankColor = getRankColor(item.rank)
+
+                          return(
+                            <View style={[styles.itemContainer]}>
+                              <View style={styles.statView}>
+                                <View style={styles.statRow}>
+                                  <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
+                                  <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
+                                </View>
+                                <View style={styles.statRow}>
+                                  <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
+                                  <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
+                                </View>
+                              </View>
+
+                              <Image
+                                style={{
+                                  flex: 1,
+                                  aspectRatio: 1,
+                                  resizeMode: "cover",
+                                  borderRadius: 10,
+                                  ...StyleSheet.absoluteFillObject,
+                                }}
+                                source={{uri: item.img}}
+                              />
+                              <RankBackground rank={item.rank} name={item.name} />
+                            </View>
+                          )
+                        }}
+                      />
+                    </ImageBackground>
                   </View>
                 </View>
 

@@ -9,7 +9,7 @@ import _ from "lodash";
 import ls from 'lz-string';
 
 import Swiper from 'react-native-swiper'
-import { submitWaifu, toggleWishListWaifu } from '../redux/actions/dataActions'
+import { submitWaifu, toggleWishListWaifu, getRankColor } from '../redux/actions/dataActions'
 
 // Redux stuff
 import store from "../redux/store";
@@ -45,22 +45,7 @@ function CharThumbNail(props){
     husbando = users.filter(x => x.wishList.includes(char.link))[0]
   }
 
-  var rankColor = chroma('black').alpha(.5)
-  
-  switch(char.rank){
-    case 1:
-      rankColor = chroma("#ff0000").alpha(.5)
-      break;
-    case 2:
-      rankColor = chroma("#835220").alpha(.5)
-      break;
-    case 3:
-      rankColor = chroma("#7b7979").alpha(.5)
-      break;
-    case 4:
-      rankColor = chroma("#b29600").alpha(.5)
-      break;
-  }
+  var rankColor = getRankColor(char.rank)
   
   return(
     <View style={{flex:1, position:"relative", marginTop: 10}}>
@@ -104,7 +89,7 @@ function CharThumbNail(props){
               source={{uri: char.img}}
             />
             
-            <View style={{minHeight: 50, height: 'auto',  padding: 2, backgroundColor: rankColor, alignItems:"center", justifyContent:"center"}}>
+            <View style={{minHeight: 50, height: 'auto',  padding: 2, backgroundColor: chroma(rankColor).alpha(.5), alignItems:"center", justifyContent:"center"}}>
               <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>
                 {char.name.length > 15 ? char.name.slice(0,15) + '...' : char.name}
               </Text>
@@ -113,13 +98,6 @@ function CharThumbNail(props){
         }
       >
         <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => toggleWishListWaifu(char.link)} title={isFav ? "Remove From WishList" : "Add To WishList"} />
-
-        {/* {
-          userInfo.submitSlots > 0  && !isSubmitted ?
-            <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => submitWaifu(char)}
-              title={"Submit"} />
-          :<></>
-        } */}
       </Menu>
     </View>
   )

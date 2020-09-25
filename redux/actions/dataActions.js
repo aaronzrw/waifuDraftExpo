@@ -16,6 +16,7 @@ import {
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
   SET_GAUNTLET,
+  SET_BOSS_ITEMS,
   SET_USER,
   SET_CHATS
 } from '../types';
@@ -23,36 +24,9 @@ import {
 import * as firebase from 'firebase';
 import 'firebase/auth';
 
-import axios from 'axios';
 import store from '../store';
 import _ from 'lodash'
 import lz from "lz-string";
-
-export async function getSearchData(){
-  store.dispatch({ type: LOADING_UI });
-
-  var returnObj = await firebase.storage().ref('filters/SearchFile.json').getDownloadURL()
-  .then(function(url) {
-    return fetch(url);
-  })
-  .then(response => {
-    console.log("got data")
-    return response.json()
-  })
-  .then((jsonData) => {
-    console.log("parse data")
-    return lz.decompress(jsonData);
-  })
-  .then((data) => {
-    return JSON.parse(data);
-  })
-  .catch((err) => {
-    console.log(err)
-  })
-
-  store.dispatch({ type: SET_SEARCH_DATA, payload: returnObj });  
-  store.dispatch({ type: STOP_LOADING_UI });
-}
 
 export async function useRankCoin(waifu, rankCoins, points, statCoins){
   store.dispatch({ type: LOADING_UI });
@@ -191,16 +165,6 @@ export async function submitVote(voteCount, waifu){
       payload: {type: "error", message: err.message}
     });
   })
-  // await axios.post('/submitVote', {waifuId: waifu.waifuId, voteObj})
-  // .then((res) => {
-  //   console.log(res.data)
-  // })
-  // .catch((err) => {
-  //   store.dispatch({
-  //     type: SET_SNACKBAR,
-  //     payload: err
-  //   });
-  // });
   
   store.dispatch({ type: STOP_LOADING_UI });
 }
@@ -271,12 +235,45 @@ export async function toggleWishListWaifu(link){
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export async function buyWaifu(waifu){
+export async function toggleSeriesFavorite(type, name){
   store.dispatch({ type: LOADING_UI });
 
-  var price = waifu.rank * 5;
+  var user = store.getState().user.credentials;
+  var favoriteSeries = user.favoriteSeries;
+
+  var isFav = favoriteSeries.filter(x => x.type == type).map(x => x.series).includes(name);
+  if(isFav){
+    favoriteSeries = favoriteSeries.filter(x => x.type != type || x.series != name);
+  }
+  else{
+    favoriteSeries.push({type, series: name})
+  }
+
+  firebase.firestore().doc(`users/${user.userId}`).update({favoriteSeries: favoriteSeries})
+  
+  store.dispatch({ type: STOP_LOADING_UI });
+}
+
+export async function buyWaifu(waifu, price = 0){
+  store.dispatch({ type: LOADING_UI });
+
+  if(price == 0){ //default price will be 5* waifu rank
+    price = waifu.rank * 5;
+  }
+
   var user = store.getState().user.credentials;
   var remPoints = user.points - price;
+
+  var waifuCurrentHusbando = (await firebase.firestore().doc(`waifus/${waifu.waifuId}`).get()).data().husbandoId
+  if(waifuCurrentHusbando != "Shop"){
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Waifu Has Already Been Bought`}
+    });
+
+    return 
+  }
+
   await firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({husbandoId: user.userId})
   .then(() => {
     return firebase.firestore().doc(`users/${user.userId}`).update({points: remPoints});
@@ -524,6 +521,7 @@ export async function setRealTimeListeners(userId){
     data.forEach(x => {
       var trade = x.data();
       trade.id = x.id;
+      trade.createdDate = trade.createdDate.toDate()
       var fromWaifus = waifus.filter(y => trade.from.waifus.includes(y.waifuId))
       var toWaifus = waifus.filter(y => trade.to.waifus.includes(y.waifuId))
 
@@ -649,8 +647,7 @@ export async function setRealTimeListeners(userId){
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
-  var unSubGauntlet = firebase.firestore().collection("gauntlet")
-  .onSnapshot(function(querySnapshot) {
+  var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
     try{
       var bosses = [];
       querySnapshot.forEach(function(doc) {
@@ -714,7 +711,50 @@ export async function setRealTimeListeners(userId){
     store.dispatch({ type: STOP_LOADING_UI });
   });
 
-  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet, unSubChats} })
+  var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
+    try{
+      var items = [];
+      querySnapshot.forEach(function(doc) {
+        items.push({...doc.data()});
+      });
+
+      store.dispatch({
+        type: SET_BOSS_ITEMS,
+        payload: items
+      });
+    }
+    catch(err){
+      console.log(err);
+      store.dispatch({
+        type: SET_BOSS_ITEMS,
+        payload: []
+      });
+    }
+
+    store.dispatch({ type: STOP_LOADING_UI });
+  });
+
+  // var searchItems = store.getState().data.searchItems;
+  // if(_.isEmpty(searchItems)){
+  //   var compressSearchJson = require('../../assets/SearchFile.json');
+  //   searchItems = JSON.parse(ls.decompress(compressSearchJson));
+  //   store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+  // }
+
+  store.dispatch({ type: SUB_SNAPSHOTS, payload: 
+    {
+      unSubUser,
+      unSubOtherUsers,
+      unSubWaifus,
+      unSubPollWaifus,
+      unSubDailyPoll,
+      unSubWeeklyPoll,
+      unSubTrades,
+      unSubGauntlet,
+      unSubChats,
+      unSubBossItems
+    }
+  })
 }
 
 async function buildBossRewardStr(reward){
@@ -815,4 +855,20 @@ export function getBaseStats(rank){
 			break;
 	}
 	return stats;
+}
+
+export function getRankColor(rank){
+  var rankColor = "#ff0000"
+	switch (rank){
+		case 2:
+      rankColor = "#835220"
+			break;
+		case 3:
+      rankColor = "#7b7979"
+			break;
+		case 4:
+      rankColor = "#b29600"
+			break;
+	}
+	return rankColor;
 }

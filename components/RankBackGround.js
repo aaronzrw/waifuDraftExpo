@@ -1,6 +1,8 @@
 import React, { Component, PureComponent, createRef, forwardRef, useState } from 'react';
 import { Platform, StatusBar, StyleSheet, View, Text, Button, Image, ImageBackground, Dimensions, Animated, Easing } from 'react-native';
 
+import {getRankColor} from '../redux/actions/dataActions'
+
 const chroma = require('chroma-js')
 
 const { Value, timing } = Animated;
@@ -18,44 +20,12 @@ export default class RankGradient extends PureComponent {
   }
   
   componentDidMount(){
-    var rankColor = "#ff0000";
-    
-    switch(this.state.rank){
-      case 1:
-        rankColor = "#ff0000"
-        break;
-      case 2:
-        rankColor = "#835220"
-        break;
-      case 3:
-        rankColor = "#7b7979"
-        break;
-      case 4:
-        rankColor = "#b29600"
-        break;
-    }
-
+    var rankColor = getRankColor(this.state.rank);
     this.setState({ rankColor })
   }
 
   componentWillReceiveProps(props){
-    var rankColor = "#ff0000";
-    
-    switch(props.rank){
-      case 1:
-        rankColor = "#ff0000"
-        break;
-      case 2:
-        rankColor = "#835220"
-        break;
-      case 3:
-        rankColor = "#7b7979"
-        break;
-      case 4:
-        rankColor = "#b29600"
-        break;
-    }
-
+    var rankColor = getRankColor(props.rank);
     this.setState({rank: props.rank, name: props.name, rankColor})
   }
 
