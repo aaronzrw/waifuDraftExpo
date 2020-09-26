@@ -103,10 +103,10 @@ class Layout extends Component {
 			});
 
 			// This listener is fired whenever a notification is received while the app is foregrounded
-			Notifications.addNotificationReceivedListener(this._handleNotification);
+			// Notifications.addNotificationReceivedListener(this._handleNotification);
 
 			// This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
-			Notifications.addNotificationResponseReceivedListener(this._handleNotificationResponse);
+			// Notifications.addNotificationResponseReceivedListener(this._handleNotificationResponse);
 	
 			let uiReducerWatch = watch(store.getState, 'UI')
 			this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
@@ -145,7 +145,7 @@ class Layout extends Component {
 
 			if(this.uiUnsubscribe != null){
 				this.uiUnsubscribe()
-				Notifications.removeAllNotificationListeners();
+				// Notifications.removeAllNotificationListeners();
 			}
 		}
 
@@ -160,8 +160,8 @@ class Layout extends Component {
   _handleNotificationResponse = response => {
 		store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: "notification clicked"}});
 
-		const data = response.notification.request.content.data
-		store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: data}});
+		// const data = response.notification.request.content.data
+		// store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: data}});
 	};
 	
 	async componentDidMount() {
