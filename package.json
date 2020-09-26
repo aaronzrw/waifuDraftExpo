@@ -87,7 +87,8 @@
     "redux-thunk": "^2.3.0",
     "redux-watch": "^1.1.1",
     "ruby": "^0.6.1",
-    "styled-components": "^5.0.1"
+    "styled-components": "^5.0.1",
+    "expo-notifications": "~0.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

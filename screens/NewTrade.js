@@ -404,7 +404,7 @@ export default class NewTrade extends Component {
                 
                 <View style={{height: 50, width: width}}>
                   <Button
-                    disabled={!this.state.fromTradeIsValid}
+                    disabled={!this.state.toTradeIsValid}
                     mode={"contained"} color={chroma('aqua').hex()}
                     labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                     onPress={() => this.handleSlideChange('next')}
@@ -626,7 +626,7 @@ export default class NewTrade extends Component {
                   <View style={styles.buttonItem}>
                     <Button
                       onPress={() => this.handleSlideChange('next')}
-                      disabled={!this.state.toTradeIsValid}
+                      disabled={!this.state.fromTradeIsValid}
                       mode={"contained"} color={chroma('aqua').hex()} 
                       labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                     >
@@ -654,7 +654,7 @@ export default class NewTrade extends Component {
 
                       <FlatGrid
                         itemDimension={150}
-                        items={this.state.waifuList.filter(x => this.state.tradeTo.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                        items={this.state.waifuList.filter(x => this.state.tradeTo.waifus.includes(x.waifuId))}
                         style={styles.gridView}
                         spacing={20}
                         renderItem={({item, index}) => {
@@ -707,7 +707,7 @@ export default class NewTrade extends Component {
                       
                       <FlatGrid
                         itemDimension={150}
-                        items={this.state.waifuList.filter(x => this.state.tradeFrom.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                        items={this.state.waifuList.filter(x => this.state.tradeFrom.waifus.includes(x.waifuId))}
                         style={styles.gridView}
                         spacing={20}
                         renderItem={({item, index}) => {

@@ -121,8 +121,8 @@ function TradeStackScreen() {
       <TradeStack.Screen name="NewTrade" component={NewTradeScreen} />
       <TradeStack.Screen name="ViewTrade" component={ViewTradeScreen} />
       <TradeStack.Screen name="ViewChat" component={ViewChatScreen} />
-      <ProfileStack.Screen name="SubmitCharacter" component={SubmitCharacterScreen} />
-      <ProfileStack.Screen name="UserWaifuFavorites" component={UserWaifuFavoritesScreen} />
+      <TradeStack.Screen name="SubmitCharacter" component={SubmitCharacterScreen} />
+      <TradeStack.Screen name="UserWaifuFavorites" component={UserWaifuFavoritesScreen} />
     </TradeStack.Navigator>
   );
 }

@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import React, { Component, createRef, forwardRef } from 'react';
+import React, { Component, createRef, forwardRef, useState, useEffect, useRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView, AppState} from 'react-native';
+import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 
 import {
   LOADING_UI,
@@ -10,18 +11,15 @@ import {
 	SET_SNACKBAR
 } from '../redux/types';
 
-//Native paper
-import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
-
 //Components
 import Toast from '../components/Toast'
 
 //Expo
-import { Notifications } from 'expo';
 import { Video } from 'expo-av';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
+import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
 import Constants from 'expo-constants';
 
@@ -95,6 +93,20 @@ class Layout extends Component {
   _handleAppStateChange = async (nextAppState) => {
     if ((this.state.appState.match(/inactive|background/) && nextAppState === 'active') || (this.state.appState == "active" && nextAppState == undefined)) {
 			this.startListeners(this.state)
+						
+			Notifications.setNotificationHandler({
+				handleNotification: async () => ({
+					shouldShowAlert: true,
+					shouldPlaySound: true,
+					shouldSetBadge: false,
+				}),
+			});
+
+			// This listener is fired whenever a notification is received while the app is foregrounded
+			Notifications.addNotificationReceivedListener(this._handleNotification);
+
+			// This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
+			Notifications.addNotificationResponseReceivedListener(this._handleNotificationResponse);
 	
 			let uiReducerWatch = watch(store.getState, 'UI')
 			this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
@@ -133,11 +145,24 @@ class Layout extends Component {
 
 			if(this.uiUnsubscribe != null){
 				this.uiUnsubscribe()
+				Notifications.removeAllNotificationListeners();
 			}
 		}
 
     this.setState({appState: nextAppState});
 	}
+
+	_handleNotification = notification => {
+		store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "notification recieved"}});
+    this.setState({ notification: notification });
+	};
+
+  _handleNotificationResponse = response => {
+		store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: "notification clicked"}});
+
+		const data = response.notification.request.content.data
+		store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: data}});
+	};
 	
 	async componentDidMount() {
 		AppState.addEventListener('change', this._handleAppStateChange);
@@ -159,6 +184,7 @@ class Layout extends Component {
 			this.registerForPushNotificationsAsync(props.authUser.uid);
 			// this._notificationSubscription = Notifications.addListener(this._handleNotification);
 		}
+
 		this.setState({...props})
 		
 		store.dispatch({type: STOP_LOADING_UI})
@@ -214,13 +240,7 @@ class Layout extends Component {
 				store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "Error adding error log"}});
 			});
 		}
-  };
-
-  // _handleNotification = notification => {
-  //   Vibration.vibrate();
-  //   console.log(notification);
-  //   this.setState({ notification: notification });
-	// };
+	};
 	
 	render() {
 		return (
