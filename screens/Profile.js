@@ -1,6 +1,8 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
+import { Input, Slider, BottomSheet } from 'react-native-elements';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
+
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
@@ -8,39 +10,46 @@ import ls from 'lz-string';
 import Swiper from 'react-native-swiper'
 
 import UserProfileImg from '../components/UserProfileImg'
-import { MaterialIcons } from '@expo/vector-icons';
+import SwipeIndicator from '../components/SwipeIndicator'
 
 //Firebase
 import firebase, { firestore } from 'firebase/app'
 import 'firebase/auth'
 
 //Media
+import { Icon } from 'react-native-elements'
+import { MaterialIcons } from '@expo/vector-icons';
+
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
 import ChestOpen from '../assets/images/ChestOpen.gif'
 import ChestShake from '../assets/images/ChestShake.gif'
 
-import animeIcon from '../assets/images/AnimeLogo.png'
+import cancelIcon from '../assets/images/CancelIcon.png'
+import backIcon from '../assets/images/BackIcon.png'
+
+import animeIcon from '../assets/images/AMLogo.png'
 import marvelIcon from '../assets/images/MarvelLogo.png'
 import dcIcon from '../assets/images/DCLogo.png'
 
 //Redux
 import store from '../redux/store';
-import watch from 'redux-watch'
+import watch from 'redux-watch';
+import { getSearchData } from '../redux/actions/dataActions';
 
 import {
   LOADING_UI,
   STOP_LOADING_UI,
-	SET_USER,
+	SET_USER_CREDENTIALS,
 	SET_SNACKBAR
 } from '../redux/types';
 
 
-import { getRankColor } from '../redux/actions/dataActions'
 import { logoutUser } from '../redux/actions/userActions'
 
 //Component
-import RankBackground from '../components/RankBackGround'
+import WaifuCard from '../components/WaifuCard'
+import { user } from 'firebase-functions/lib/providers/auth';
 
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
@@ -53,16 +62,18 @@ export default class Profile extends Component {
     this.mounted = true;
     this.emailVal = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     var trades = _.cloneDeep(store.getState().data.trades);
-    trades = trades.filter(x => x.from.husbandoId == store.getState().user.credentials.userId ||
-      x.to.husbandoId == store.getState().user.credentials.userId)
-      
+    trades = trades.filter(x => x.from.husbandoId == store.getState().user.creds.userId ||
+      x.to.husbandoId == store.getState().user.creds.userId)
+
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
+      draftSettings: store.getState().draft,
 			loading: store.getState().data.loading,
       waifuList: store.getState().data.waifuList,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       waifus: _.cloneDeep(store.getState().user.waifus),
-      users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
+      users: [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
       showUpdateUserName: false,
       showEmailUpdate: false,
       showPasswordUpdate: false,
@@ -76,7 +87,10 @@ export default class Profile extends Component {
       newConfPass: null,
       chestOpen: false,
       waifuType: "All",
-      size: {width,height}
+      dailyBonusRedeemed: true,
+      showSwitchDraft: false,
+      size: {width,height},
+      otherDrafts: []
     };
 
     this.selectWaifu = this.selectWaifu.bind(this)
@@ -98,7 +112,9 @@ export default class Profile extends Component {
     this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
-  setSubscribes(){
+  async setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -118,24 +134,44 @@ export default class Profile extends Component {
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       var selectedWaifu = null;
-      var users = [{...newVal.credentials, waifus: newVal.waifus }].concat(newVal.otherUsers);
+      var users = [{...newVal.creds, waifus: newVal.waifus }].concat(newVal.otherUsers);
       if(this.state.selectedWaifu != null){
         selectedWaifu = newVal.waifus.filter(x => x.waifuId == this.state.selectedWaifu.waifuId)[0]
       }
 
-      this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
+      this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
     trades = trades.filter(x => x.from.husbandoId == this.state.userInfo.userId || x.to.husbandoId == this.state.userInfo.userId)
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+
+    var drafts = []    
+    var currentDraftId = this.state.userInfo.currentDraftId;
+    await firebase.firestore().collectionGroup('users').where("id", '==', this.state.userInfo.userId).get()
+    .then(async function (querySnapshot) {
+      var draftIds = querySnapshot.docs.map(doc => doc.ref.parent.parent.id)
+
+      drafts = (await firebase.firestore().collection(`drafts`)
+      .where(firestore.FieldPath.documentId(), "in", draftIds)
+      .get()).docs.filter(x => x.id != currentDraftId).map(x => {
+        return {
+          name: x.data().settings.name,
+          img: x.data().settings.img,
+          code: x.data().settings.code,
+          pass: x.data().settings.pass
+        }
+      })      
+    });
 
     this.setState({
+      otherDrafts: drafts,
       users,
       trades,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       waifus: store.getState().user.waifus,
-      waifuList: store.getState().data.waifuList
+      waifuList: store.getState().data.waifuList,
+      dailyBonusRedeemed: store.getState().user.creds.dailyBonusRedeemed
     })
   }
 
@@ -210,7 +246,7 @@ export default class Profile extends Component {
   }
 
   async updateUserName(){
-    await firebase.firestore().doc(`users/${this.state.userInfo.userId}`).update({userName: this.state.newUserName})
+    await firebase.firestore().doc(`${this.state.draftSettings.path}/users/${this.state.userInfo.userId}`).update({userName: this.state.newUserName})
     .then(() => {
       store.dispatch({
         type: SET_SNACKBAR,
@@ -248,7 +284,7 @@ export default class Profile extends Component {
       this.state.currPass
     );
 
-    // Prompt the user to re-provide their sign-in credentials
+    // Prompt the user to re-provide their sign-in creds
     var result = await user.reauthenticateWithCredential(credential).then(function() {
       // User re-authenticated
       console.log("Reatuh successful")
@@ -266,10 +302,9 @@ export default class Profile extends Component {
   }
 
   async addNewDaily(){
-    var compressSearchJson = require('../assets/SearchFile.json');
-    var searchJson = JSON.parse(ls.decompress(compressSearchJson));
+    var searchItems = getSearchData();
 
-    var waifuLinks = await firebase.firestore().collection('waifus').get()
+    var waifuLinks = await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
     .then((docs) => {
       var links = []
       docs.forEach(x => {
@@ -279,7 +314,7 @@ export default class Profile extends Component {
       return links
     });
 
-    const characters = searchJson.characters;
+    const characters = searchItems.characters;
     characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
     characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
     characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
@@ -300,10 +335,10 @@ export default class Profile extends Component {
       newWaifu.votes = [];
     }
 
-    await firebase.firestore().collection('waifus').add(newWaifu)
+    await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).add(newWaifu)
     .then(doc => {
       newWaifu.waifuId = doc.id
-      return firebase.firestore().collection('waifuPoll').add(newWaifu);
+      return firebase.firestore().collection(`${this.state.draftSettings.path}/waifuPoll`).add(newWaifu);
     });
   }
 
@@ -312,67 +347,18 @@ export default class Profile extends Component {
   }
 
   async addFavoritieSeries(){
-    // var dailies = await firebase.firestore().collection('waifuPoll').get()
-    // dailies.forEach(x => {
-    //   console.log(`Setting ${x.data().name}`)
-
-    //   var id = x.data().waifuId;
-    //   var waifu = x.data();
-
-    //   delete waifu.waifuId;
-    //   delete waifu.votes
-    //   firebase.firestore().collection('waifus').doc(id).set(waifu)
-    //   //x.ref.delete()
-    // })
-    var weeklies = await firebase.firestore().collection('waifus')
-    .where("husbandoId","==","Weekly").get()
-    weeklies.forEach(x => {
-      if(x.data().name != "Aunt May"){
-        console.log(`Deleting ${x.data().name}`)
-        x.ref.delete()
-      }
-
-      // var waifu = x.data();
-      // waifu.waifuId = x.ref.id;
-      // waifu.votes = [];
-      // firebase.firestore().collection('waifuPoll').add(waifu)
+    var draft = store.getState().draft;
+    (await firebase.firestore().collection(`users`).get()).docs.forEach(user => {
+      user.ref.update({currentDraftId: "6FDG"})
     })
-    // .then(async (userDocs) => {
-    //   userDocs.forEach(x => {
-    //     x.ref.update({ favoriteSeries: [] })
-    //   });
-    // });
   }
   
   recreateWeeklyPoll(){
     console.log("remake")
-    // firebase.firestore().collection('waifus').where("husbandoId", "==", "Weekly").get()
-    // .then(async (docs) => {
-    //   docs.forEach(async x => {
-    //     var waifu = {waifuId: x.id, ...x.data(), votes: []}
-
-    //     await firebase.firestore().collection("waifuPoll").add(Object.assign({}, waifu))
-    //   });
-    // })
-    
-    // firebase.firestore().collection('waifus-bk').get()
-    // .then(async (docs) => {
-    //   docs.forEach(async x => {
-    //     var waifuData = x.data();
-    //     if(waifuData.husbandoId != "Weekly"){
-    //       var waifu = waifuData;
-    //       var id = _.cloneDeep(waifu).waifuId;
-
-    //       delete waifu.waifuId
-  
-    //       await firebase.firestore().doc(`waifus/${id}`).set(waifu)
-    //     }
-      // });
-    // })
   }
 
   createWaifuBackUp(){
-    firebase.firestore().collection('waifus').get()
+    firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
     .then(async (docs) => {
       var waifus = [];
       docs.forEach(x => {
@@ -384,7 +370,7 @@ export default class Profile extends Component {
         var waifu = _.cloneDeep(x);
         delete waifu.docId;
 
-        await firebase.firestore().collection('waifus-bk').doc(id).set(waifu);
+        await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
       })
     })
   }
@@ -397,7 +383,7 @@ export default class Profile extends Component {
   async checkDailyBonus(){
     var user = this.state.userInfo;
 
-    if(user.dailyBonusRedeemed){
+    if(this.state.dailyBonusRedeemed){
       store.dispatch({
         type: SET_SNACKBAR,
         payload: {type: "warning", message: `You've Already Claimed Todays Bonus`}
@@ -406,23 +392,31 @@ export default class Profile extends Component {
     else if(!this.state.chestOpen){
       this.setState({chestOpen: true})
 
-      await firebase.firestore().doc(`users/${user.userId}`).get()
+      await firebase.firestore().doc(`${this.state.draftSettings.path}/users/${user.userId}`).get()
       .then(doc => {
+        var draft = store.getState().draft;
         var points = doc.data().points;
 
-        return doc.ref.update({points: points + 5, dailyBonusRedeemed: true, streak: 0})
+        var streak = this.state.userInfo.streak || 0;
+
+        return doc.ref.update({points: points + draft.deafultPoints, dailyBonusRedeemed: true, streak: streak + 1})
       })
       
       setTimeout(function(){
         store.dispatch({
           type: SET_SNACKBAR,
-          payload: {type: "info", message: `Daily Bonus Collected! (5 Points)`}
+          payload: {type: "info", message: `Daily Bonus Collected!`}
         });
         this.setState({chestOpen: false})
       }.bind(this), 1000)
     }
   }
 
+  changeSettingsFabState(){
+    var fabState = this.state.settingsFabOpen;
+    this.setState({settingsFabOpen: !fabState})
+  }
+  
   changeFabState(){
     var fabState = this.state.fabOpen;
     this.setState({fabOpen: !fabState})
@@ -458,268 +452,273 @@ export default class Profile extends Component {
     var completedTrades = _.cloneDeep(trades.filter(x => x.status != "Active"))
 
     trades = activeTrades.concat(completedTrades);
+
+    var userActions =
+      [
+        { icon: 'heart-box',
+          label: 'Logout',
+          onPress: () => logoutUser()
+        },
+        { 
+          icon: 'plus-box-outline',
+          label: 'Search For Draft',
+          onPress: () => this.state.navigation.navigate("FindDraft")
+        },
+        // { 
+        //   icon: 'plus-box-outline',
+        //   label: 'Switch Draft',
+        //   onPress: () => this.setState({ showSwitchDraft: true })
+        // }
+      ]
+
+    if(this.state.userInfo.isAdmin){
+      userActions = userActions.concat([
+        { icon: 'heart-box',
+          label: 'Add New Daily',
+          onPress: () => this.addNewDaily()
+        },
+        { icon: 'heart-box',
+          label: 'Add Favorite Series',
+          onPress: () => this.addFavoritieSeries()
+        },
+        { icon: 'heart-box',
+          label: 'Create Waifu Backup',
+          onPress: () => this.createWaifuBackUp()
+        }
+      ])
+    }
+
     return (
       <>
         {this.state.loading ?
           <></>
         :
-          <Swiper
-            index={0}
-            showsPagination={false}
-          >
-            <View style={[styles.container]}>
-              <UserProfileImg user={this.state.userInfo} img={this.state.userInfo.img}/>
+          <>
+            <SwipeIndicator horiSwipe={true} tintColor={"black"}/>
+            <Swiper
+              index={0}
+              showsPagination={false}
+            >
+              <View style={[styles.container]}>
+                <UserProfileImg user={this.state.userInfo} img={this.state.userInfo.img}/>
 
-              <View style={[styles.userInfoView]}>
-                <View style={[styles.userInfo]}>
-                  <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showUpdateUserName: true })}  style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                    <Text style={[styles.text]}>{this.state.userInfo.userName}</Text>
-                    <MaterialIcons name="edit" size={24} color="black" />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showEmailUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                    <Text style={[styles.text, {fontSize: 20}]}>{this.state.userInfo.email}</Text>
-                    <MaterialIcons name="edit" size={24} color="black"/>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showPasswordUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
-                    <Text style={[styles.text]}>Password</Text>
-                    <MaterialIcons name="edit" size={24} color="black"/>
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={[styles.userStatsView]}>
-                  <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
-                  <Text style={[styles.text]}>Rank Coins - {this.state.userInfo.rankCoins}</Text>
-                  <Text style={[styles.text]}>Stat Coins - {this.state.userInfo.statCoins}</Text>
-                  {/* <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text> */}
-                </View>
-              </View>
-
-              {!this.state.userInfo.dailyBonusRedeemed && !this.state.chestOpen ?
-                <TouchableOpacity activeOpacity={.5} onPress={() => this.checkDailyBonus()}
-                  style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
-                  <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
-                </TouchableOpacity>
-              :<></>}
-
-              {
-                this.state.chestOpen ?
-                  <TouchableOpacity style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
-                    <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
-                  </TouchableOpacity>
-                :<></>
-              }
-
-              <View style={{height: 50, width: width}}>
-                <Button
-                  mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                  onPress={logoutUser}
-                >
-                  LogOut
-                </Button>
-              </View>
-              
-              {
-                this.state.userInfo.isAdmin ?
-                  <View>
-                    <View style={{height: 50, width: width}}>
-                      <Button
-                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        onPress={this.addNewDaily}
-                      >
-                        Add New Daily
-                      </Button>
-                    </View>
-                    <View style={{height: 50, width: width}}>
-                      <Button
-                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        onPress={this.addFavoritieSeries}
-                      >
-                        Add Favorite Series
-                      </Button>
-                    </View>
-                    <View style={{height: 50, width: width}}>
-                      <Button
-                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        onPress={this.createWaifuBackUp}
-                      >
-                        Create Waifu BackUp
-                      </Button>
-                    </View>
+                <View style={[styles.userInfoView]}>
+                  <View style={[styles.userInfo]}>
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showUpdateUserName: true })}  style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                      <Text style={[styles.text]}>{this.state.userInfo.userName}</Text>
+                      <MaterialIcons name="edit" size={24} color="black" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showEmailUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                      <Text style={[styles.text, {fontSize: 20}]}>{this.state.userInfo.email}</Text>
+                      <MaterialIcons name="edit" size={24} color="black"/>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showPasswordUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                      <Text style={[styles.text]}>Password</Text>
+                      <MaterialIcons name="edit" size={24} color="black"/>
+                    </TouchableOpacity>
                   </View>
-                : <></>
-              }
-            </View>
+                  
+                  <View style={[styles.userStatsView]}>
+                    <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
+                    <Text style={[styles.text]}>Rank Coins - {this.state.userInfo.rankCoins}</Text>
+                    <Text style={[styles.text]}>Stat Coins - {this.state.userInfo.statCoins}</Text>
+                    {/* <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text> */}
+                  </View>
+                </View>
 
-            <View style={styles.waifuListView}>
-              <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
-                <Text style={styles.text}>TRADES</Text>
+                {!this.state.dailyBonusRedeemed && !this.state.chestOpen ?
+                  <View style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                    <TouchableOpacity activeOpacity={.5} onPress={() => this.setState({dailyBonusRedeemed: true}, this.checkDailyBonus())}
+                      style={{height: 'auto', width: 'auto', alignItems:"center", justifyContent:"center"}}>
+                      <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 125, width:125}} />
+                    </TouchableOpacity>
+                  </View>
+                :<></>}
+
+                {
+                  this.state.chestOpen ?
+                    <View style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                      <TouchableOpacity style={{height: 'auto', width: 'auto'}}>
+                        <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 125, width:125}} />
+                      </TouchableOpacity>
+                    </View>
+                  :<></>
+                }
+                
+                <FAB.Group
+                  fabStyle={{backgroundColor: chroma('aqua').hex()}}
+                  open={this.state.settingsFabOpen}
+                  icon={'settings'}
+                  actions={userActions}
+                  onStateChange={() => this.changeSettingsFabState()}
+                />
               </View>
-              <FlatGrid
-                itemDimension={200}
-                items={_.cloneDeep(this.state.trades.filter(x => x.status == "Active")).concat(_.cloneDeep(this.state.trades.filter(x => x.status != "Active")))}
-                style={styles.gridView}
-                // staticDimension={300}
-                // fixed
-                spacing={20}
-                renderItem={({item, index}) => {
-                  const users = this.state.users;
-                  const fromUser = users.filter(x => x.userId == item.from.husbandoId)[0];
-                  const toUser = users.filter(x => x.userId == item.to.husbandoId)[0];
 
-                  return(
-                    <TouchableOpacity activeOpacity={.25}
-                      onPress={() => this.selectTrade(item)} 
-                      style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
-                    >
-                      {
-                        item.status != "Active" ?
-                        <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, elevation: 15, justifyContent:"center", alignItems:"center"}}>
-                          <Text style={[styles.text, 
-                          {
-                            fontSize:50, 
-                            color: item.status == "Accepted" ? chroma("green").brighten() :
-                              chroma('red').brighten()
-                          }]}>{item.status}</Text>
-                        </View>
-                        : <></>
-                      }
+              <View style={styles.waifuListView}>
+                <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
+                  <Text style={styles.text}>TRADES</Text>
+                </View>
+                <FlatGrid
+                  itemDimension={200}
+                  items={_.cloneDeep(this.state.trades.filter(x => x.status == "Active")).concat(_.cloneDeep(this.state.trades.filter(x => x.status != "Active")))}
+                  style={styles.gridView}
+                  // staticDimension={300}
+                  // fixed
+                  spacing={20}
+                  renderItem={({item, index}) => {
+                    const users = this.state.users;
+                    const fromUser = users.filter(x => x.userId == item.from.husbandoId)[0];
+                    const toUser = users.filter(x => x.userId == item.to.husbandoId)[0];
 
-                      <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
-                        <View style={{flex: 1}}>
-                          <Text style={[styles.text]}>From</Text>
-                        </View>
-                        <View style={{flex: 1}}>
-                          <Text style={[styles.text]}>To</Text>
-                        </View>
-                      </View>
-                      
-                      <View style={{flex: 1, flexDirection:"row"}}>
-                        <View style={{flex: 1, justifyContent: "center", alignItems:"center"}}>
-                          <View style={[styles.tradeUserImg]}>
-                            <Image source={{uri: fromUser.img}} style={[styles.tradeUserImg]} />
+                    return(
+                      <TouchableOpacity activeOpacity={.25}
+                        onPress={() => this.selectTrade(item)} 
+                        style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
+                      >
+                        {
+                          item.status != "Active" ?
+                          <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, elevation: 15, justifyContent:"center", alignItems:"center"}}>
+                            <Text style={[styles.text, 
+                            {
+                              fontSize:50, 
+                              color: item.status == "Accepted" ? chroma("green").brighten() :
+                                chroma('red').brighten()
+                            }]}>{item.status}</Text>
+                          </View>
+                          : <></>
+                        }
+
+                        <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
+                          <View style={{flex: 1}}>
+                            <Text style={[styles.text]}>From</Text>
+                          </View>
+                          <View style={{flex: 1}}>
+                            <Text style={[styles.text]}>To</Text>
                           </View>
                         </View>
                         
-                        <View style={{flex: 1, justifyContent: "center", alignItems:"center"}}>
-                          <View style={[styles.tradeUserImg]}>
-                            <Image source={{uri: toUser.img}} style={[styles.tradeUserImg]} />
+                        <View style={{flex: 1, flexDirection:"row"}}>
+                          <View style={{flex: 1, justifyContent: "center", alignItems:"center"}}>
+                            <View style={[styles.tradeUserImg]}>
+                              <Image source={{uri: fromUser.img}} style={[styles.tradeUserImg]} />
+                            </View>
                           </View>
-                        </View>
-                      </View>
-                      
-                      <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
-                          <View style={{flex: 1}}>
-                            <Text style={[styles.text, {fontSize: 20}]}>
-                              {item.createdDate.toDateString()}
-                            </Text>
-                          </View>
-                        </View>
-                    </TouchableOpacity>
-                  )
-                }}
-              />
-            </View>
-          
-            <View style={styles.waifuListView}>
-              <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
-              <Text style={styles.text}>WAIFUS - {waifus.length}</Text>
-              </View>
-              <FlatGrid
-                itemDimension={150}
-                items={waifus}
-                style={styles.gridView}
-                // staticDimension={300}
-                // fixed
-                spacing={20}
-                renderItem={({item, index}) => {
-                  var rankColor = getRankColor(item.rank)
-
-                  return(
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
-                      <View style={styles.statView}>
-                        <View style={styles.statRow}>
-                          <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                          <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
-                        </View>
-                        <View style={styles.statRow}>
-                          <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                          <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
-                        </View>
-                      </View>
-
-                      <Image
-                        style={{
-                          flex: 1,
-                          aspectRatio: 1,
-                          resizeMode: "cover",
-                          borderRadius: 10,
-                          ...StyleSheet.absoluteFillObject,
                           
-                        }}
-                        source={{uri: item.img}}
-                      />
-                      <RankBackground rank={item.rank} name={item.name} />
-                    </TouchableOpacity>
-                  )
-                }}
-              />
+                          <View style={{flex: 1, justifyContent: "center", alignItems:"center"}}>
+                            <View style={[styles.tradeUserImg]}>
+                              <Image source={{uri: toUser.img}} style={[styles.tradeUserImg]} />
+                            </View>
+                          </View>
+                        </View>
+                        
+                        <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
+                            <View style={{flex: 1}}>
+                              <Text style={[styles.text, {fontSize: 20}]}>
+                                {item.createdDate.toDateString()}
+                              </Text>
+                            </View>
+                          </View>
+                      </TouchableOpacity>
+                    )
+                  }}
+                />
+              </View>
+            
+              <View style={styles.waifuListView}>
+                <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
+                <Text style={styles.text}>WAIFUS - {waifus.length}</Text>
+                </View>
+                <FlatGrid
+                  itemDimension={150}
+                  items={waifus}
+                  style={styles.gridView}
+                  // staticDimension={300}
+                  // fixed
+                  spacing={20}
+                  renderItem={({item, index}) => {
+                    return(
+                      <WaifuCard waifu={item} selectWaifu={() => this.selectWaifu(item)}/>
+                    )
+                  }}
+                />
 
-              <FAB.Group
-                fabStyle={{backgroundColor: chroma('aqua').hex()}}
-                open={this.state.fabOpen}
-                icon={'settings'}
-                actions={[
-                  { icon: 'heart-box',
-                    label: 'Show Favorited Waifus',
-                    onPress: () => this.openUserFavoritesScreen()
-                  },
-                  { icon: 'account-multiple-outline',
-                    label: 'Show All Waifus',
-                    onPress: () => this.setState({waifuType: "All"})
-                  },
-                  {
-                    icon: ({ size, color }) =>
-                       (
-                        <Image
-                          source={animeIcon}
-                          style={{ width: size , height: size}}
-                        />
-                      ),
-                    // icon: {marvelIcon},
-                    label: 'Show Anime Waifus',
-                    onPress: () => this.setState({waifuType: "Anime-Manga"})
-                  },
-                  {
-                    icon: ({ size, color }) =>
-                       (
-                        <Image
-                          source={marvelIcon}
-                          style={{ width: size , height: size}}
-                        />
-                      ),
-                    label: 'Show Marvel Waifus',
-                    onPress: () => this.setState({waifuType: "Marvel"})
-                  },
-                  {
-                    icon: ({ size, color }) =>
-                       (
-                        <Image
-                          source={dcIcon}
-                          style={{ width: size , height: size}}
-                        />
-                      ),
-                    label: 'Show DC Waifus',
-                    onPress: () => this.setState({waifuType: "DC"})
-                  },
-                ]}
-                onStateChange={() => this.changeFabState()}
-              />
-        
-            </View>
-          </Swiper>
+                <FAB.Group
+                  fabStyle={{backgroundColor: chroma('aqua').hex()}}
+                  open={this.state.fabOpen}
+                  icon={'settings'}
+                  actions={[
+                    { icon: 'heart-box',
+                      label: 'Show Favorited Waifus',
+                      onPress: () => this.openUserFavoritesScreen()
+                    },
+                    { icon: 'account-multiple-outline',
+                      label: 'Show All Waifus',
+                      onPress: () => this.setState({waifuType: "All", fabOpen: false})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={animeIcon}
+                            style={{ width: size, height: size}}
+                          />
+                        ),
+                      // icon: {marvelIcon},
+                      label: 'Show Anime Waifus',
+                      onPress: () => this.setState({waifuType: "Anime-Manga", fabOpen: false})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={marvelIcon}
+                            style={{ width: size , height: size}}
+                          />
+                        ),
+                      label: 'Show Marvel Waifus',
+                      onPress: () => this.setState({waifuType: "Marvel", fabOpen: false})
+                    },
+                    {
+                      icon: ({ size, color }) =>
+                        (
+                          <Image
+                            source={dcIcon}
+                            style={{ width: size , height: size}}
+                          />
+                        ),
+                      label: 'Show DC Waifus',
+                      onPress: () => this.setState({waifuType: "DC", fabOpen: false})
+                    },
+                  ]}
+                  onStateChange={() => this.changeFabState()}
+                />
+          
+              </View>
+            </Swiper>
+          </>
         }
+
+        {/* <BottomSheet isVisible={this.state.showSwitchDraft} modalProps={tra}>
+          <FlatGrid
+            itemDimension={50}
+            items={this.state.otherDrafts}
+            style={styles.gridView}
+            // staticDimension={300}
+            // fixed
+            spacing={20}
+            renderItem={({item, index}) => {
+              console.log(item)
+              return(
+                <TouchableOpacity activeOpacity={.25}
+                  style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
+                >
+                </TouchableOpacity>
+              )
+            }}
+          />
+        </BottomSheet> */}
 
         {/* Update User Info Modal */}
         <Modal
@@ -728,6 +727,11 @@ export default class Profile extends Component {
           onDismiss={this.closeUserModal}
           onRequestClose={this.closeUserModal}
         >
+          <TouchableOpacity activeOpacity={.25} onPress={this.closeUserModal}  style={{height: 75, width: 75, position: "absolute", left: 10, top: 10, zIndex: 1,
+           justifyContent:"center", alignItems:"center"}}>
+            <Image source={backIcon} style={[{ height: 50, width: 50 }]} />
+          </TouchableOpacity>
+
           {
             !this.state.reAuthSuc ?
               <View style={{height: height, width: width, backgroundColor: chroma('white')}}>
@@ -889,8 +893,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 2,
   },
   userInfo: {
     height: 125,

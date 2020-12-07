@@ -2,6 +2,8 @@ import React, { Component, useState, useEffect } from 'react';
 import { Animated, Easing, Platform, StatusBar, StyleSheet, View, Image, Dimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import _ from 'lodash';
+import ls from 'lz-string';
+
 import firebase from 'firebase/app'
 import 'firebase/auth';
 
@@ -78,7 +80,7 @@ export class Signup extends Component {
 			password: this.state.password,
 			confirmPassword: this.state.confirmPassword,
 			userName: this.state.userName,
-			pin: this.state.pin
+			pin: ls.compressToUTF16(this.state.pin)
 		};
 
 	
@@ -109,13 +111,10 @@ export class Signup extends Component {
 				userName: newUserData.userName,
 				email: newUserData.email,
 				img: `https://firebasestorage.googleapis.com/v0/b/waifudraftunlimited.appspot.com/o/no-img.png?alt=media`,
-				createdDate: new Date(),
+				createdDate: firebase.firestore.Timestamp.now(),
+				modifiedDate: firebase.firestore.Timestamp.now(),
+				currentDraftId: "",
 				isAdmin: false,
-				isWinner: false,
-				points: 5,
-				statCoins: 0,
-				rankCoins: 0,
-				submitSlots: 0,
 				isActive: true,
 				pin: newUserData.pin
 			};

@@ -9,7 +9,7 @@ import _ from "lodash";
 import ls from 'lz-string';
 
 import Swiper from 'react-native-swiper'
-import { submitWaifu, toggleWishListWaifu, getRankColor } from '../redux/actions/dataActions'
+import { submitWaifu, toggleWishListWaifu, getRankColor, getSearchData } from '../redux/actions/dataActions'
 
 // Redux stuff
 import store from "../redux/store";
@@ -17,7 +17,7 @@ import {
   LOADING_UI,
   STOP_LOADING_UI,
   SET_SEARCH_DATA,
-  SET_USER
+  SET_USER_CREDENTIALS
 } from '../redux/types';
 
 const { width, height } = Dimensions.get('window');
@@ -107,32 +107,13 @@ export default class ViewWishListCharacters extends Component {
   constructor(props) {
     super(props);
 
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
-    var searchItems = store.getState().data.searchItems;
-    if(_.isEmpty(searchItems)){
-      store.dispatch({type: LOADING_UI})
-
-      var compressSearchJson = require('../assets/SearchFile.json');
-      searchItems = JSON.parse(ls.decompress(compressSearchJson));
-      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
-      
-	  	store.dispatch({type: STOP_LOADING_UI})
-    }
-
-    var chars = [];
-    var wishList = users.flatMap(x => x.wishList).filter(x => x != null);
-
-    if(wishList.length > 0){
-      chars = chars.concat(searchItems.characters['Anime-Manga'].items);
-      chars = chars.concat(searchItems.characters['Marvel'].items);
-      chars = chars.concat(searchItems.characters['DC'].items);
-    }
-
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
     this.state = {
       navigation: props.navigation,
-      userInfo: store.getState().user.credentials,
+      goBackFunc: props.route.params.goBackFunc,
+      userInfo: store.getState().user.creds,
       users,
-      chars,
+      chars: [],
       waifuList: store.getState().data.waifuList,
     };
 
@@ -143,25 +124,58 @@ export default class ViewWishListCharacters extends Component {
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
 
-  setSubscribes(){
+  async setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ waifuList: newVal.waifuList })
+      var searchItems = newVal.searchItems ?? getSearchData();
+
+      var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+      var wishList = users.flatMap(x => x.wishList).filter(x => x != null);
+
+      var chars = [];
+      if(wishList.length > 0){
+        chars = chars.concat(searchItems.characters['Anime-Manga'].items);
+        chars = chars.concat(searchItems.characters['Marvel'].items);
+        chars = chars.concat(searchItems.characters['DC'].items);
+      }
+
+      this.setState({
+        chars,
+        waifuList: newVal.waifuList,
+        origSearchItems: searchItems,
+        searchItems: {
+          'Anime-Manga': searchItems.views['Anime-Manga'].items,
+          'Marvel': searchItems.views['Marvel'].items,
+          'DC': searchItems.views['DC'].items,
+        }
+      })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      
-      var users = [newVal.credentials].concat(newVal.otherUsers)
-      this.setState({userInfo: newVal.credentials, users})
+      var users = [newVal.creds].concat(newVal.otherUsers)
+      this.setState({userInfo: newVal.creds, users})
     }))
 
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers)
+    var searchItems = getSearchData();
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers)
+    var wishList = users.flatMap(x => x.wishList).filter(x => x != null);
+
+    var chars = [];
+    if(wishList.length > 0){
+      chars = chars.concat(searchItems.characters['Anime-Manga'].items);
+      chars = chars.concat(searchItems.characters['Marvel'].items);
+      chars = chars.concat(searchItems.characters['DC'].items);
+    }
+
     this.setState({
       waifuList: store.getState().data.waifuList,
-      userInfo: store.getState().user.credentials,
-      users
+      userInfo: store.getState().user.creds,
+      users,
+      chars,
     })
   }
 
@@ -218,7 +232,7 @@ export default class ViewWishListCharacters extends Component {
         this.state.navigation.navigate("OtherUserCharDetails", {waifu: item})
     }
     else{
-      this.state.navigation.navigate("SubmitCharacter", {item})
+      this.state.navigation.navigate("SeachCharacterDetails", {item})
     }
   }
 

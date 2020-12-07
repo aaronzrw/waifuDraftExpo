@@ -6,8 +6,6 @@ import { NativeRouter as Router, Route, Link } from "react-router-native";
 import { DefaultTheme as NavigationDefaultTheme, DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 
 import _ from 'lodash';
-import axios from 'axios';
-
 //Expo
 import { AppLoading } from 'expo';
 import { Asset } from 'expo-asset';
@@ -28,7 +26,7 @@ import Layout from './components/Layout'
 import store from './redux/store';
 import watch from 'redux-watch'
 import { Provider } from 'react-redux';
-import { SET_UNAUTHENTICATED, UNSUB_SNAPSHOTS, STOP_LOADING_UI} from './redux/types';
+import { SET_GAME_DATA, SET_SNACKBAR, UNSUB_SNAPSHOTS, STOP_LOADING_UI} from './redux/types';
 
 //Actions
 import { setAuthorizationHeader } from './redux/actions/userActions';
@@ -39,8 +37,6 @@ import 'firebase/auth'
 
 require('./util/firebaseSetup')
 console.disableYellowBox = true;
-
-axios.defaults.baseURL = 'https://us-central1-waifudraftunlimited.cloudfunctions.net/api';
 
 let Window = Dimensions.get('window');
 const styles = StyleSheet.create({
@@ -66,7 +62,20 @@ const styles = StyleSheet.create({
     flex:1,
     justifyContent:"center",
     alignItems:"center"
-  }
+  },
+	image:{
+		width: Window.width * .8,
+		height: Window.width * .8
+	},
+	loadingContainer:{
+		width: '100%',
+		height: '100%',
+		justifyContent:"center",
+		alignItems:"center",
+		backgroundColor: "rgba(0,0,0,.15)",
+		position: "absolute",
+		zIndex: 10
+	}
 })
 
 const CustomDefaultTheme = {
@@ -90,15 +99,15 @@ export default class App extends Component{
     };
     
     this.onAuthStateChanged = _.debounce(this.onAuthStateChanged, 1000)
-    
+  }
+  
+  onAuthStateChanged  = async (user)  => {
+    this.setState({isAuthenticationReady: true, authUser: user});
+
     let userReducerWatch = watch(store.getState, 'user')
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       this.setState({ ...newVal })
     }))
-  }
-  
-  onAuthStateChanged = (user) => {
-    this.setState({isAuthenticationReady: true, authUser: user});
   }
 
   async componentDidMount(){
@@ -108,7 +117,7 @@ export default class App extends Component{
 
   componentWillUnmount(){
     this.userUnsubscribe()
-    // store.dispatch({ type: UNSUB_SNAPSHOTS });
+    store.dispatch({ type: UNSUB_SNAPSHOTS });
   }
 
   _cacheSplashResourcesAsync = async () => {

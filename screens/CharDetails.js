@@ -1,7 +1,7 @@
 import React, { Component, createRef, forwardRef } from 'react';
 import { Text, FAB, TextInput, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighlight,
-   Image, ImageBackground, Dimensions, FlatList, Modal } from 'react-native';
+   Image, ImageBackground, Dimensions, FlatList, Modal, KeyboardAvoidingView } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import NumericInput from 'react-native-numeric-input'
 import {
@@ -14,13 +14,22 @@ const chroma = require('chroma-js')
 import Swiper from 'react-native-swiper'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
+
+//Media
 import pointsIcon from '../assets/images/pointsIcon.png'
 import rankCoinIcon from '../assets/images/rankCoinIcon.png'
+import hofCoinIcon from '../assets/images/HOFCoin.png'
+import hofCoinAnim from '../assets/images/HOF-Coin-Anim.gif'
 import atkIcon from '../assets/images/atkIcon.png'
 import defIcon from '../assets/images/defIcon.png'
+import cancelIcon from '../assets/images/CancelIcon.png'
+import backIcon from '../assets/images/BackIcon.png'
+
+import SwipeIndicator from '../components/SwipeIndicator'
+
 
 import statCoinIcon from '../assets/images/statCoinIcon.png'
-import {useRankCoin, useStatCoin, updateWaifuImg, getBaseStats, getRankColor} from '../redux/actions/dataActions'
+import {useRankCoin, useStatCoin, useHOFCoin, updateWaifuImg, getBaseStats, getRankColor} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -33,26 +42,21 @@ export default class CharDetails extends Component {
 
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       poll: store.getState().data.poll.weekly,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
+      waifuSettingsOpen: false,
       waifu: props.route.params.waifu,
-      newImage: null,
-      atkStatUp: 0,
-      defStatUp: 0,
-      showRankCoinConf: false,
-      showStatCoinModal: false,
-      showUpdateImg: false,
     };
     
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
-    this.useRankCoinFunc = this.useRankCoinFunc.bind(this)
-    this.useStatCoinFunc = this.useStatCoinFunc.bind(this)
-    this.updateImg = this.updateImg.bind(this)
-    this.updateImgText = this.updateImgText.bind(this)
+    this.changeWaifusSettingsFabState = this.changeWaifusSettingsFabState.bind(this)
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -62,12 +66,11 @@ export default class CharDetails extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({userInfo: newVal.credentials})
+      this.setState({userInfo: newVal.creds})
     }))
     
-
     this.setState({
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       poll: store.getState().data.poll.weekly,
       waifu: store.getState().data.waifuList.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     })
@@ -95,71 +98,56 @@ export default class CharDetails extends Component {
     WebBrowser.openBrowserAsync(this.state.waifu.link);
   };
 
-  useRankCoinFunc(rankCoin = 0, points = 0, statCoins = 0){
-    useRankCoin(this.state.waifu, rankCoin, points, statCoins)
-    this.setState({ showRankCoinConf: false})
-  }
-
-  useStatCoinFunc(){
-    console.log("use stat coin")
-    var stats = {
-      attack: this.state.atkStatUp,
-      defense: this.state.defStatUp
-    }
-
-    useStatCoin(this.state.waifu, stats)
-    this.setState({ showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})
-  }
-
-  updateImgText(text){
-    this.setState({newImage: text})
-  }
-
-  async updateImg(){
-    if((this.state.newImage.match(/\.(jpeg|jpg|gif|png)$/) != null)){
-      var success = await updateWaifuImg(this.state.waifu, this.state.newImage);
-      
-      if(success){
-        this.setState({ newVal: null, showUpdateImg: false})
-      }
-    }
-    else{
-      store.dispatch({
-        type: SET_SNACKBAR,
-        payload: {type: "warning", message: `Image Url Must Be .jpeg, .jpg, .gif or .png`}
-      });
-      return;
-    }
+  changeWaifusSettingsFabState(){
+    var fabState = this.state.waifuSettingsOpen;
+    this.setState({waifuSettingsOpen: !fabState})
   }
 
   render(){
     const waifu = this.state.waifu;
 
-    var attackNeeded = 0;
-    var defenseNeeded = 0;
-    var pointsNeededToRank = 0;
-    var statCoinsNeededToRank = 0;
-    var nextRankColor = getRankColor(waifu.rank);
-    
-    if(waifu.rank < 4){
-      var baseStats = getBaseStats(waifu.rank + 1);
-      nextRankColor = getRankColor(waifu.rank + 1);
-
-      attackNeeded = baseStats.attack - waifu.attack < 0 ? 0 : baseStats.attack - waifu.attack;
-      defenseNeeded = baseStats.defense - waifu.defense < 0 ? 0 : baseStats.defense - waifu.defense;
-
-      statCoinsNeededToRank = attackNeeded + defenseNeeded;
-      pointsNeededToRank = (waifu.rank + 1) * 5;
-    }
-
-    var displayName = waifu.name;
-    if(waifu.type != 'Anime-Manga')
-      displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
+    var waifuActions =
+    [
+      { 
+        label: 'Open Waifu Link',
+        icon: "link-variant",
+        onPress: () => this.waifuLinkPress()
+      },
+      {
+        icon: "image",
+        label: 'Change Waifu Image',
+        onPress: () => this.state.navigation.navigate("CharUpdate", {selView: "Img", waifu})
+      },
+      {
+        icon: ({ size, color }) =>
+          (
+          <Image
+            source={statCoinIcon}
+            style={{ width: size , height: size}}
+          />
+        ),
+        label: 'Upgrade Stats',
+        onPress: () => this.state.navigation.navigate("CharUpdate", {selView: "Stat", waifu})
+      },
+      {
+        icon: ({ size, color }) =>
+          (
+          <Image
+            source={rankCoinIcon}
+            style={{ width: size , height: size}}
+          />
+        ),
+        label: 'Upgrade Rank',
+        onPress: () => this.state.navigation.navigate("CharUpdate", {selView: "Rank", waifu})
+      }
+    ]
 
     return (
       <View style={[styles.container]}>
         <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
           <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: waifu.img}}>
+            <SwipeIndicator horiSwipe={true} />
+            
             <View style={styles.bgView}>
               <Swiper
                 index={0}
@@ -171,270 +159,39 @@ export default class CharDetails extends Component {
                 <View style={{flex:1}}>
                   {/* Name */}
                   <View style={styles.nameView}>
-                    <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
-
-                    <FAB
-                      small
-                      color="white"
-                      style={[styles.fab, {alignSelf: "center"}]}
-                      icon="link-variant"
-                      onPress={this.waifuLinkPress}
-                    />
-                    <FAB
-                      small
-                      color="white"
-                      style={styles.imgUpdtFab}
-                      icon="image"
-                      onPress={() => this.setState({showUpdateImg: true})}
-                    />
+                    <Text style={[styles.text,styles.nameText,{fontSize: 45}]}>{waifu.name}</Text>
                   </View>
 
                   <View style={styles.statsView}>
+                    {/* {
+                      waifu.isHOF ?
+                        <Image source={hofCoinIcon} style={[{ height: 100, width: 100, position: "absolute", top: 0, right: 0 }]} />
+                      : <></>
+                    } */}
+
                     <View style={styles.statsRow}>
                       <Text style={styles.statText}>ATK: {waifu.attack}</Text>
                       <Text style={styles.statText}>DEF: {waifu.defense}</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.buttonRowView}>
-                    <View style={styles.buttonItem}>
-                      <Button onPress={() => this.setState({showRankCoinConf: true})}
-                        disabled={waifu.rank >= 4 || (this.state.userInfo.rankCoins <= 0 && (pointsNeededToRank == 0 || statCoinsNeededToRank > this.state.userInfo.statCoins))}
-                        mode={"contained"} color={chroma('aqua').hex()} 
-                        labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                      >
-                        Upgrade Rank
-                      </Button>
-                    </View>
-
-                    <View style={styles.buttonItem}>
-                      <Button
-                        mode={"contained"}
-                        color={chroma('aqua').hex()}
-                        disabled={this.state.userInfo.statCoins <= 0}
-                        labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        onPress={() => this.setState({showStatCoinModal: true})}
-                      >
-                        Upgrade Stats
-                      </Button>
                     </View>
                   </View>
                 </View>
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails waifu={waifu}/> : <ComicCharDetails waifu={waifu} />}
                 </View>
               </Swiper>
             </View>
           </ImageBackground>
         </ImageBackground>
-
-        {/* Rank Modal */}
-        <Modal
-          animationType="slide"
-          visible={this.state.showRankCoinConf}
-          onRequestClose={() => this.setState({showRankCoinConf: false})}
-        >
-          <View style={{flex:1, width:width, justifyContent:"center", alignItems:"center"}}>
-            <View style={{height:75, width: width, backgroundColor:chroma('black').alpha(.1), justifyContent:"center", alignItems:"center"}}>
-              <Text style={[styles.text]}>
-                Rank Up Your Waifu
-              </Text>
-            </View>
-            
-            <View style={{flex:1, justifyContent:"center", alignItems:"center"}}>
-              <View style={{flexDirection:"row"}}>
-                <View style={[{height: 100, width: 100, margin:8}]}>
-                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={pointsIcon} />
-                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
-                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{pointsNeededToRank}</Text>
-                  </View>
-                </View>
-                <View style={[{height: 100, width: 100, margin:8}]}>
-                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={atkIcon} />
-                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
-                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{attackNeeded}</Text>
-                  </View>
-                </View>
-                <View style={[{height: 100, width: 100, margin:8}]}>
-                  <Image style={{tintColor: chroma("black"), height:'100%', width:'100%'}} resizeMode="contain" source={defIcon} />
-                  <View style={{position:"absolute", zIndex: 1, height:'100%', width:'100%', justifyContent:"center", alignItems:"center"}}>
-                    <Text style={{color: chroma(nextRankColor), fontFamily:"Edo", fontSize:50, textAlign:'center'}}>{defenseNeeded}</Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={{flex:1}}>
-                <View style={styles.buttonRowView}>
-                  <View style={styles.buttonItem}>
-                    <Button onPress={() => this.useRankCoinFunc(0, pointsNeededToRank, statCoinsNeededToRank)}
-                      disabled={pointsNeededToRank > this.state.userInfo.points || statCoinsNeededToRank > this.state.userInfo.statCoins}
-                      mode={"contained"} color={chroma('aqua').hex()} 
-                      labelStyle={{fontSize: 20, fontFamily: "Edo", height: 'auto'}}
-                    >
-                      Rank Up
-                    </Button>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            <View style={{flex:1, justifyContent:"center", alignItems:"center"}}>
-              <Image style={[{height: 100, width: 100, margin:8, tintColor: chroma("black")}]} source={rankCoinIcon} />
-              <View style={styles.buttonRowView}>
-                <View style={styles.buttonItem}>
-                  <Button onPress={() => this.useRankCoinFunc(1)}
-                    disabled={this.state.userInfo.rankCoins == 0}
-                    mode={"contained"} color={chroma('aqua').hex()} 
-                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                  >
-                    Use Rank Coin
-                  </Button>
-                </View>
-              </View>
-            </View>
-
-          </View>
-        </Modal>
-      
-        {/* Stat Modal */}
-        <Modal
-          animationType="slide"
-          visible={this.state.showStatCoinModal}
-          onRequestClose={() => this.setState({showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})}
-        >
-          <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={{flex:1, width: width, backgroundColor: chroma("white"), borderRadius: 25, alignItems:"center", justifyContent: "center"}}>
-              <View style={{height: 300, width: width/1.5, }}>
-                <View style={{flex:1}}>
-                  <Text style={[styles.statText, {color:"black"} ]}>ATK</Text>
-                  <NumericInput value={this.state.atkStatUp}
-                    onChange={value => {
-                      this.setState({atkStatUp: value})
-                    }}
-                    rounded
-                    minValue={0}
-                    totalHeight={35}
-                    maxValue={this.state.userInfo.statCoins - this.state.defStatUp}
-                    leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                    rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                    separatorWidth={0}
-                    inputStyle={{
-                      fontFamily:"Edo",
-                      fontSize: 25,
-                    }}
-                    containerStyle={{
-                      width: '90%',
-                      justifyContent:"center",
-                      alignItems:"center",
-                      alignSelf:"center",
-                      backgroundColor: chroma('white').alpha(.5).hex(),
-                      borderWidth: 1,
-                      borderColor: chroma('black').alpha(.25).hex(),
-                    }}
-                  />
-                </View>
-                <View style={{flex:1}}>
-                  <Text style={[styles.statText, {color:"black"} ]}>DEF</Text>
-                  <NumericInput value={this.state.defStatUp}
-                    onChange={(value) => {
-                      this.setState({defStatUp: value})
-                    }}
-                    rounded
-                    minValue={0}
-                    maxValue={this.state.userInfo.statCoins - this.state.atkStatUp}
-                    totalHeight={35}
-                    leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                    rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                    separatorWidth={0}
-                    inputStyle={{ 
-                      fontFamily:"Edo",
-                      fontSize: 25,
-                    }}
-                    containerStyle={{
-                      width: '90%',
-                      justifyContent:"center",
-                      alignItems:"center",
-                      alignSelf:"center",
-                      backgroundColor: chroma('white').alpha(.5).hex(),
-                      borderWidth: 1,
-                      borderColor: chroma('black').alpha(.25).hex(),
-                    }}
-                  />
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.buttonRowView}>
-              <View style={styles.buttonItem}>
-                <Button onPress={this.useStatCoinFunc}
-                  disabled={this.state.atkStatUp == 0 && this.state.defStatUp == 0}
-                  mode={"contained"} color={chroma('aqua').hex()} 
-                  labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                >
-                  Confirm
-                </Button>
-              </View>
-
-              <View style={styles.buttonItem}>
-                <Button mode={"contained"}
-                  onPress={() => this.setState({showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})}
-                  color={chroma('aqua').hex()}
-                  labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
-                    Cancel
-                </Button>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      
-        {/* Update Image Modal */}
-        <Modal
-          animationType="slide"
-          visible={this.state.showUpdateImg}
-          onRequestClose={() => this.setState({showUpdateImg: false})}
-        >
-          <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={styles.updtImgCon}>
-              <View style={[styles.profileImg]}>
-                <ImageBackground source={{uri: this.state.newImage ?? this.state.waifu.img}} style={[styles.profileImg]}>
-                  <TextInput
-                    label="img Url"
-                    underlineColor= "teal"
-                    style={styles.textField}
-                    value={this.state.newImage}
-                    mode="Outlined"
-                    onChangeText={(text) => this.updateImgText(text)}
-                  />
-                </ImageBackground>
-              </View>
-              
-              {
-                this.state.newImage != null ?
-                <>
-                  <FAB
-                    //small
-                    color="white"
-                    style={styles.cancelFab}
-                    icon="cancel"
-                    onPress={() => this.setState({newImage: null})}
-                  />
-
-                  <FAB
-                    //small
-                    color="white"
-                    style={styles.submitFab}
-                    icon="check"
-                    onPress={this.updateImg}
-                  />
-                </>
-                : <></>
-              }
-            </View>
-          </View>
-        </Modal>
-      
+        
+        <FAB.Group
+          fabStyle={{backgroundColor: chroma('aqua').hex()}}
+          open={this.state.waifuSettingsOpen}
+          icon={'settings'}
+          actions={waifuActions}
+          onStateChange={() => this.changeWaifusSettingsFabState()}
+        />
       </View>
     );
   }
@@ -450,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   updtImgCon: {
-    height: height,
+    flex: 1,
     width: width,
     alignItems:"center",
     justifyContent:"center",
@@ -461,22 +218,21 @@ const styles = StyleSheet.create({
   },
   bgView:{
     flex: 1,
-    backgroundColor: "rgba(255,255,255,.25)"
+    backgroundColor: "rgba(255,255,255,.25)",
+    position: "relative"
   },
   profileImg:{
-    height: height * .6,
-    width: width * .8,
+    height: '95%',
+    width: '95%',
     borderRadius: 20,
-    marginTop: 5,
-    marginBottom: 5,
+    // marginTop: 5,
+    // marginBottom: 5,
     resizeMode: "cover",
     overflow: "hidden",
     shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 10,
-    alignItems:"center",
-    justifyContent:"center",
-    position: 'absolute',
+    shadowOpacity: .5,
+    elevation: 1,
+    // position: 'absolute',
     zIndex: 1,
   },
   buttonRowView: {
@@ -494,7 +250,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   nameView:{
-    height: 'auto',
+    height: "auto",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,.75)",
@@ -503,9 +259,8 @@ const styles = StyleSheet.create({
     color:"white"
   },
 	textField: {
-    position: "absolute",
-    bottom: 15,
-    width: '95%',
+    height: 75,
+    width: width * .95,
 		backgroundColor: "white"
 	},
   text:{
@@ -553,15 +308,15 @@ const styles = StyleSheet.create({
   cancelFab: {
     position: 'absolute',
     zIndex: 2,
-    left: 50,
-    bottom: 75,
+    left: 5,
+    bottom: 5,
     backgroundColor: chroma('red').hex()
   },
   submitFab: {
     position: 'absolute',
     zIndex: 2,
-    right: 50,
-    bottom: 75,
+    right: 5,
+    bottom: 5,
     backgroundColor: chroma('#80ff80').hex()
   },
 });

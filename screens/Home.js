@@ -17,6 +17,7 @@ import { useSelector } from 'react-redux';
 //Component
 import Countdown from '../components/CountDown'
 import RankBackground from '../components/RankBackGround'
+import SwipeIndicator from '../components/SwipeIndicator'
 
 //Media
 import TopVote from '../assets/images/TopVote.png'
@@ -38,7 +39,7 @@ class CarouselItem extends PureComponent{
       dailyActive: props.item.dailyActive,
       parallaxProps: props.parallaxProps,
       onPressCarousel: props._onPressCarousel,
-			userInfo: store.getState().user.credentials
+			userInfo: store.getState().user.creds
     }
   }
 
@@ -49,7 +50,7 @@ class CarouselItem extends PureComponent{
       dailyActive: props.item.dailyActive,
       parallaxProps: props.parallaxProps,
       onPressCarousel: props._onPressCarousel,
-			userInfo: store.getState().user.credentials
+			userInfo: store.getState().user.creds
     })
 	}
 
@@ -174,7 +175,7 @@ class CarouselItem extends PureComponent{
             {
               this.state.pollType == "Weekly" ?
                 <View style={[styles.weeklyCountDown], {...StyleSheet.absoluteFill, position:"absolute", zIndex: 10}}>
-                  <Countdown activeTill={this.state.item.leaveDate.toDate()} type={"WEEKLY"} />
+                  <Countdown close={this.state.item.leaveDate.toDate()} type={"WEEKLY"} />
                 </View>
               : <></>
             }
@@ -196,14 +197,15 @@ export default class Home extends Component {
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
-			card: null,
+      goBackFunc: props.route.params.goBackFunc,
+			waifu: null,
 			topVote: null,
 			showDetails: false,
 			showVoteView: true,
 			weeklyPollSelected: false,
 			dailyPollSelected: false,
 			loading: store.getState().data.loading,
-			userInfo: store.getState().user.credentials,
+			userInfo: store.getState().user.creds,
 			weeklyPoll: store.getState().data.poll.weekly,
 			dailyPoll: store.getState().data.poll.daily,
 			weeklyPollWaifus: store.getState().data.weeklyPollWaifus,
@@ -211,7 +213,7 @@ export default class Home extends Component {
 			voteCount: 0,
       weeklyActiveIndex: 0,
       dailyActiveIndex: 0,
-      size: { width, height },
+      size: { width, height }
     };
 
     this.selectWaifu = this.selectWaifu.bind(this)
@@ -221,6 +223,8 @@ export default class Home extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -229,11 +233,11 @@ export default class Home extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials })
+      this.setState({ userInfo: newVal.creds })
     }))
 
     this.setState({
-			userInfo: store.getState().user.credentials,
+			userInfo: store.getState().user.creds,
 			weeklyPoll: store.getState().data.poll.weekly,
 			dailyPoll: store.getState().data.poll.daily,
 			weeklyPollWaifus: store.getState().data.weeklyPollWaifus,
@@ -273,7 +277,7 @@ export default class Home extends Component {
     var poll = this.state.weeklyPollWaifus.map(x => x.waifuId).includes(item) ? this.state.weeklyPoll : this.state.dailyPoll;
     
     this.state.navigation.navigate("VoteDetails", {waifu, poll})
-    this.setState({card: item})
+    this.setState({waifu: item})
   }
   
   _renderItem = ({item, index}, parallaxProps) => {
@@ -288,100 +292,103 @@ export default class Home extends Component {
         {this.state.loading ?
           <></>
         :
-          <Swiper
-            index={0}
-            horizontal={false}
-            showsPagination={false}
-            style={{backgroundColor:"rgba(0,0,0,1)"}}
-          >
-            <View style={{ flex: 1, position:"relative"}}>
-              <ImageBackground
-                blurRadius={1}
-                imageStyle={{backgroundColor: chroma('black'), opacity: .35}}
-                source={{uri: _.isEmpty(this.state.weeklyPollWaifus) ? null : this.state.weeklyPollWaifus[this.state.weeklyActiveIndex].img}}
-                style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}
-              >
-                <Carousel
-                  data={this.state.weeklyPollWaifus.map(x => 
-                    {
-                      var votes = _.orderBy(x.votes, ['vote'] ,['desc']);
-                      var topVote = votes.length > 0 ? votes[0] : {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
+          <>
+            <SwipeIndicator vertSwipe={true} />
+            <Swiper
+              index={0}
+              horizontal={false}
+              showsPagination={false}
+              style={{backgroundColor:"rgba(0,0,0,1)"}}
+            >
+              <View style={{ flex: 1, position:"relative"}}>
+                <ImageBackground
+                  blurRadius={1}
+                  imageStyle={{backgroundColor: chroma('black'), opacity: .35}}
+                  source={{uri: _.isEmpty(this.state.weeklyPollWaifus) ? null : this.state.weeklyPollWaifus[this.state.weeklyActiveIndex].img}}
+                  style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}
+                >
+                  <Carousel
+                    data={this.state.weeklyPollWaifus.map(x => 
+                      {
+                        var votes = _.orderBy(x.votes, ['vote'] ,['desc']);
+                        var topVote = votes.length > 0 ? votes[0] : {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
 
-                      return {...x, topVote, dailyActive: false}
-                    })
-                  }
-                  sliderWidth={this.state.size.width}
-                  itemWidth={this.state.size.width * .8}
-                  renderItem={this._renderItem}
-                  hasParallaxImages={true}
-                  loop
-                  inactiveSlideScale={.85}
-                  onSnapToItem = { index => this.setState({weeklyActiveIndex:index }) }
-                />
+                        return {...x, topVote, dailyActive: false}
+                      })
+                    }
+                    sliderWidth={this.state.size.width}
+                    itemWidth={this.state.size.width * .8}
+                    renderItem={this._renderItem}
+                    hasParallaxImages={true}
+                    loop
+                    inactiveSlideScale={.85}
+                    onSnapToItem = { index => this.setState({weeklyActiveIndex:index }) }
+                  />
 
-                <View style={{height:50, position:"absolute", bottom: 25, flex:1}}>
-                  <Text style={{textAlign:"center", color:"white", fontSize:50, fontFamily:"Edo"}}>WEEKLY</Text>
-                </View>
-              </ImageBackground>
-            </View>
-            
-            <View style={{ flex: 1, position:"relative"}}>
-              {
-                this.state.dailyPoll != null ?
-                  <View style={styles.dailyCountDown}>
-                    <Countdown activeTill={this.state.dailyPoll.activeTill} type={"DAILY"} isActive={this.state.dailyPoll.isActive}/>
+                  <View style={{height:50, position:"absolute", bottom: 25, flex:1}}>
+                    <Text style={{textAlign:"center", color:"white", fontSize:50, fontFamily:"Edo"}}>WEEKLY</Text>
                   </View>
-                :<></>
-              }
-  
-              <ImageBackground
-                blurRadius={1}
-                imageStyle={{backgroundColor: chroma('black'), opacity: .35}}
-                source={{uri: _.isEmpty(this.state.dailyPollWaifus) ? null :  this.state.dailyPollWaifus[this.state.dailyActiveIndex].img}}
-                style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}
-              >
-                <Carousel
-                  data={this.state.dailyPollWaifus.map(x => 
-                    {
-                      var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
-                      var votes = _.orderBy(x.votes, ['vote'], ['desc']);
-                      
-                      if(this.state.dailyPoll.isActive){
-                        votes = votes.filter(x => x.husbandoId == this.state.userInfo.userId);
-                        if(votes.length > 0){
-                          topVote = votes[0]
-                        }
-                      }
-                      else{
-                        if(votes.length > 0){
-                          var maxVote = votes[0].vote;
-                          if(votes.filter(x => x.vote == maxVote).length > 1){
-                            //Theres A Tie
-                            topVote.vote = "TIE";
-                          }
-                          else{
+                </ImageBackground>
+              </View>
+              
+              <View style={{ flex: 1, position:"relative"}}>
+                {
+                  this.state.dailyPoll != null ?
+                    <View style={styles.dailyCountDown}>
+                      <Countdown close={this.state.dailyPoll.close} type={"DAILY"}  /*isActive={this.state.dailyPoll.isActive}*/ /> 
+                    </View>
+                  :<></>
+                }
+    
+                <ImageBackground
+                  blurRadius={1}
+                  imageStyle={{backgroundColor: chroma('black'), opacity: .35}}
+                  source={{uri: _.isEmpty(this.state.dailyPollWaifus) ? null :  this.state.dailyPollWaifus[this.state.dailyActiveIndex].img}}
+                  style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}
+                >
+                  <Carousel
+                    data={this.state.dailyPollWaifus.map(x => 
+                      {
+                        var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
+                        var votes = _.orderBy(x.votes, ['vote'], ['desc']);
+                        
+                        if(this.state.dailyPoll.isActive){
+                          votes = votes.filter(x => x.husbandoId == this.state.userInfo.userId);
+                          if(votes.length > 0){
                             topVote = votes[0]
                           }
                         }
-                      }
+                        else{
+                          if(votes.length > 0){
+                            var maxVote = votes[0].vote;
+                            if(votes.filter(x => x.vote == maxVote).length > 1){
+                              //Theres A Tie
+                              topVote.vote = "TIE";
+                            }
+                            else{
+                              topVote = votes[0]
+                            }
+                          }
+                        }
 
-                      return {...x, topVote, dailyActive: this.state.dailyPoll.isActive}
-                    })
-                  }
-                  sliderWidth={this.state.size.width}
-                  itemWidth={this.state.size.width * .8}
-                  renderItem={this._renderItem}
-                  hasParallaxImages={true}
-                  loop
-                  inactiveSlideScale={.85}
-                  onSnapToItem = { index => this.setState({dailyActiveIndex:index}) } />
+                        return {...x, topVote, dailyActive: this.state.dailyPoll.isActive}
+                      })
+                    }
+                    sliderWidth={this.state.size.width}
+                    itemWidth={this.state.size.width * .8}
+                    renderItem={this._renderItem}
+                    hasParallaxImages={true}
+                    loop
+                    inactiveSlideScale={.85}
+                    onSnapToItem = { index => this.setState({dailyActiveIndex:index}) } />
 
-                  <View style={{height:50, position:"absolute", bottom: 25, flex:1}}>
-                    <Text style={{textAlign:"center", color:"white", fontSize:50, fontFamily:"Edo"}}>DAILY</Text>
-                  </View>
-              </ImageBackground>
-            </View>
-          </Swiper>
+                    <View style={{height:50, position:"absolute", bottom: 25, flex:1}}>
+                      <Text style={{textAlign:"center", color:"white", fontSize:50, fontFamily:"Edo"}}>DAILY</Text>
+                    </View>
+                </ImageBackground>
+              </View>
+            </Swiper>
+          </>
         }
       </View>
     );

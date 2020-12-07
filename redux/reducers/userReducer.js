@@ -1,5 +1,6 @@
 import {
-    SET_USER,
+    SET_USER_CREDENTIALS,
+    SET_USER_WAIFUS,
     SET_TOKEN,
     SET_AUTHENTICATED,
     SET_UNAUTHENTICATED,
@@ -9,7 +10,7 @@ import {
   import jwtDecode from 'jwt-decode';
   
   const initialState = {
-    credentials: {},
+    creds: {},
     waifus: [],
     otherUsers: [],
     authenticated: false,
@@ -32,12 +33,18 @@ import {
           token: {...action.payload},
           decodedToken: decodedToken
         }
-      case SET_USER:
+      case SET_USER_CREDENTIALS:
+        var creds = Object.assign(state.creds, action.payload);
         return {
           ...state,
           authenticated: true,
-          ...action.payload,
+          creds,
         };
+        case SET_USER_WAIFUS:
+          return {
+            ...state,
+            waifus: action.payload,
+          };
       case SET_OTHER_USERS:
         return{
           ...state,

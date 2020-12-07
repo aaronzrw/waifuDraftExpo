@@ -50,10 +50,11 @@ export default class NewTrade extends Component {
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
 			loading: store.getState().data.loading,
       waifuList: store.getState().data.waifuList,
       pollIsActive: store.getState().data.poll.weekly.isActive,
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus},
       otherUser: props.route.params.otherUser,
       size: {width,height},
       tradeFrom: {
@@ -83,6 +84,8 @@ export default class NewTrade extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -92,12 +95,12 @@ export default class NewTrade extends Component {
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       var otherUser = newVal.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0]
-      this.setState({otherUser, userInfo: {...newVal.credentials, waifus: newVal.waifus} })
+      this.setState({otherUser, userInfo: {...newVal.creds, waifus: newVal.waifus} })
     }))
     
     var otherUser = store.getState().user.otherUsers;
     this.setState({
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus},
       waifuList: store.getState().data.waifuList,
       otherUser: otherUser.filter(x => x.userId == this.state.otherUser.userId)[0],
       pollIsActive: store.getState().data.poll.weekly.isActive,

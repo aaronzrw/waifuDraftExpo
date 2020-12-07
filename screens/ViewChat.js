@@ -25,13 +25,15 @@ export default class ViewChat extends Component {
     this.chatId = props.route.params.chat.chatId;
     this.chatImg = props.route.params.chat.img ?? null;
     this.chatName = props.route.params.chat.name ?? null;
+    
     this.state = {
       users,
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       chat: props.route.params.chat,
       showOptions: false,
       otherUsers: store.getState().user.otherUsers.filter(x => users.includes(x.userId)),
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
     };
     
     this.onSend = this.onSend.bind(this)
@@ -42,6 +44,8 @@ export default class ViewChat extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let chatReducerWatch = watch(store.getState, 'chat')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -55,10 +59,10 @@ export default class ViewChat extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({userInfo: newVal.credentials})
+      this.setState({userInfo: newVal.creds})
     }))
     
-    var userInfo = store.getState().user.credentials;
+    var userInfo = store.getState().user.creds;
     var chat = this.state.chat;
     if(this.state.chat.chatId != null){
       chat = store.getState().chat.chats.filter(x => x.chatId == this.state.chat.chatId)[0]

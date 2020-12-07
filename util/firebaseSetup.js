@@ -3,6 +3,7 @@
 import firebase from 'firebase/app'
 import 'firebase/auth'
 import 'firebase/firestore' // <- needed if using firestore
+import "firebase/functions";
 import firebaseConfig from './firebaseConfig.json'
 import { ReactReduxFirebaseProvider, isLoaded } from 'react-redux-firebase'
 import { createFirestoreInstance } from 'redux-firestore' // <- needed if using firestore
@@ -25,7 +26,13 @@ const rrfProps = {
 }
   
 //Initialize firebase instance
-firebase.initializeApp(firebaseConfig)
+const db = firebase.initializeApp(firebaseConfig).firestore();
+// firebase.firestore().settings({ experimentalForceLongPolling: true });
 
-//Initialize other services on firebase instance
-firebase.firestore() // <- needed if using firestore
+// uncomment this to test firestore locally w/ emulator 
+// Uncomment the below line to use cloud functions with the emulator
+firebase.functions().useFunctionsEmulator('http://10.0.2.2:5001')
+  db.settings({
+    host: "10.0.2.2:8080",
+    ssl: false
+  });

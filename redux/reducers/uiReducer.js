@@ -15,7 +15,6 @@ import {
       case SET_SNACKBAR:
         return {
           ...state,
-          loading: false,
           snackBar: action.payload
         };
       case CLEAR_ERRORS:

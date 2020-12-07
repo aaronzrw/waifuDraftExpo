@@ -10,7 +10,7 @@ import * as firebase from 'firebase';
 import {
   LOADING_UI,
   STOP_LOADING_UI,
-  SET_USER
+  SET_USER_CREDENTIALS
 } from '../redux/types';
 import store from '../redux/store';
 
@@ -47,6 +47,7 @@ export default function UserProfileImg(props) {
 
   async function uploadImage(uri){
     store.dispatch({type: LOADING_UI})
+    var draftPath = store.getState().draft.path;
 
     const response = await fetch(uri);
     const blob = await response.blob();
@@ -57,11 +58,11 @@ export default function UserProfileImg(props) {
     ref.put(blob)
     .then(() => {return firebase.storage().ref('userProfiles').child(name).getDownloadURL()})
     .then(async url => {
-      return {url, user: await firebase.firestore().doc(`users/${user.userId}`).get()}
+      return {url, user: await firebase.firestore().doc(`${draftPath}/users/${user.userId}`).get()}
     })
     .then(async (obj) => {
       obj.user.ref.update({img: obj.url});
-      return {url: obj.url, data: await firebase.firestore().collection(`waifuPoll`).get()}
+      return {url: obj.url, data: await firebase.firestore().collection(`${draftPath}/waifuPoll`).get()}
     })
     .then((obj) => {
       obj.data.forEach((doc) => {

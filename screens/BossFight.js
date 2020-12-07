@@ -32,7 +32,7 @@ import { fightBoss, getRankColor, buyWaifu } from '../redux/actions/dataActions'
 import {
   LOADING_UI,
   STOP_LOADING_UI,
-	SET_USER,
+	SET_USER_CREDENTIALS,
 	SET_SNACKBAR
 } from '../redux/types';
 
@@ -50,12 +50,13 @@ export default class BossFight extends Component {
     var fights = _.cloneDeep(props.route.params.boss.fights);
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       boss: props.route.params.boss,
       bosses: store.getState().data.bosses,
 			loading: store.getState().data.loading,
       waifuList: store.getState().data.waifuList,
       waifus: store.getState().user.waifus,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       selectedWaifu: null,
       waifuRankColor: "",
       fightActive: false,
@@ -77,6 +78,8 @@ export default class BossFight extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
     
@@ -85,8 +88,8 @@ export default class BossFight extends Component {
       this.setState({ bosses: newVal.bosses, boss, waifuList: newVal.waifuList  })
     }))
 
-    store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials, waifus: newVal.waifus })
+    this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
+      this.setState({ userInfo: newVal.creds, waifus: newVal.waifus })
     }))
 
     var bosses = _.cloneDeep(store.getState().data.bosses);

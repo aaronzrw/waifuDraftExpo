@@ -7,6 +7,7 @@ import _, { min } from 'lodash'
 const chroma = require('chroma-js')
 
 import Swiper from 'react-native-swiper'
+import SwipeIndicator from '../components/SwipeIndicator'
 import NumericInput from 'react-native-numeric-input'
 
 import TopVote from '../assets/images/TopVote.png'
@@ -14,7 +15,7 @@ import TopVote from '../assets/images/TopVote.png'
 import Countdown from '../components/CountDown'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
-import {submitVote, getRankColor} from '../redux/actions/dataActions'
+import {submitVote, getRankColor, getZonedDate} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -45,17 +46,17 @@ export default class VoteDetails extends Component {
   constructor(props){
     super();
 
-    var isActive = false;
-    switch(props.route.params.poll.type){
-      case "weekly":
-        isActive = props.route.params.waifu.leaveDate.toDate() > new Date()
-        break;
-      case "daily":
-        isActive = props.route.params.poll.isActive
-        break;
-    }
+    var isActive = getZonedDate(props.route.params.waifu.leaveDate.toDate()) > getZonedDate();
+    // switch(props.route.params.poll.type){
+    //   case "weekly":
+    //     isActive = props.route.params.waifu.leaveDate.toDate() > new Date()
+    //     break;
+    //   case "daily":
+    //     isActive = props.route.params.poll.isActive
+    //     break;
+    // }
 
-    var userInfo = store.getState().user.credentials;
+    var userInfo = store.getState().user.creds;
     var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
     var votes = _.orderBy(props.route.params.waifu.votes, ['vote'] ,['desc']);
 
@@ -81,6 +82,7 @@ export default class VoteDetails extends Component {
     this.state = {
       isActive,
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       waifu: props.route.params.waifu,
       poll: props.route.params.poll,
       pollType: props.route.params.poll.type,
@@ -100,6 +102,8 @@ export default class VoteDetails extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -129,23 +133,24 @@ export default class VoteDetails extends Component {
         }
       }
 
-      var isActive = false;
-      switch(this.state.pollType){
-        case "weekly":
-          isActive = newWaifu.leaveDate.toDate() > new Date()
-          break;
-        case "daily":
-          isActive = newPoll.isActive
-          break;
-      }
+      // var isActive = false;
+      var isActive = getZonedDate(newWaifu.leaveDate.toDate()) > getZonedDate();
+      // switch(this.state.pollType){
+      //   case "weekly":
+      //     isActive = newWaifu.leaveDate.toDate() > new Date()
+      //     break;
+      //   case "daily":
+      //     isActive = newPoll.isActive
+      //     break;
+      // }
       this.setState({isActive, waifu: newWaifu, poll: newPoll, topVote})
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({userInfo: newVal.credentials})
+      this.setState({userInfo: newVal.creds})
     }))
     
-    var updtUserInfo = store.getState().user.credentials;
+    var updtUserInfo = store.getState().user.creds;
     var updtWaifu = [store.getState().data.weeklyPollWaifus, store.getState().data.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     var updtPoll = this.state.pollType == "weekly" ? store.getState().data.poll.weekly : store.getState().data.poll.daily;
 
@@ -171,15 +176,16 @@ export default class VoteDetails extends Component {
       }
     }
 
-    var isActive = false;
-    switch(this.state.pollType){
-      case "weekly":
-        isActive = updtWaifu.leaveDate.toDate() > new Date()
-        break;
-      case "daily":
-        isActive = updtPoll.isActive
-        break;
-    }
+    // var isActive = false;
+    var isActive = getZonedDate(updtWaifu.leaveDate.toDate()) > getZonedDate();
+    // switch(this.state.pollType){
+    //   case "weekly":
+    //     isActive = updtWaifu.leaveDate.toDate() > new Date()
+    //     break;
+    //   case "daily":
+    //     isActive = updtPoll.isActive
+    //     break;
+    // }
 
     this.setState({
       userInfo: updtUserInfo,
@@ -300,6 +306,7 @@ export default class VoteDetails extends Component {
       <View style={[styles.container]}>
         <ImageBackground blurRadius={.45} style={[styles.imageContainer]} source={{uri: this.state.waifu.img}}>
           <View style={styles.bgView}>
+            <SwipeIndicator horiSwipe={true} />
             <Swiper
               index={0}
               showsPagination={false}
@@ -310,8 +317,8 @@ export default class VoteDetails extends Component {
               {/* Vote List */}
               <View style={{flex:1}}>
                 <View style={[styles.countDown]}>
-                  <Countdown activeTill={this.state.waifu.husbandoId == "Daily" ? this.state.poll.activeTill : this.state.waifu.leaveDate.toDate()}
-                    type={this.state.waifu.husbandoId.toUpperCase()} isActive={this.state.poll.isActive} />
+                  <Countdown close={this.state.waifu.leaveDate.toDate()}
+                    type={this.state.waifu.husbandoId.toUpperCase()} /*isActive={this.state.poll.isActive}*/ />
                 </View>
 
                 <View style={styles.topVoteContainer}>
@@ -407,7 +414,7 @@ export default class VoteDetails extends Component {
             
               {/* Details */}
               <View style={styles.detailsView}>
-                {this.state.waifu.type == "Anime-Manga" ? <AMCharDetails card={this.state.waifu}/> : <ComicCharDetails card={this.state.waifu} />}
+                {this.state.waifu.type == "Anime-Manga" ? <AMCharDetails waifu={this.state.waifu}/> : <ComicCharDetails waifu={this.state.waifu} />}
               </View>
             </Swiper>
           </View>

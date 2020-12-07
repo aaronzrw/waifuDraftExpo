@@ -12,13 +12,16 @@ import _ from 'lodash'
 import lz from "lz-string";
 
 export async function addNewChat(chat){
-  chat.createdBy = store.getState().user.credentials.userId;
-  chat.modifiedBy = store.getState().user.credentials.userId;
+  var userId = store.getState().user.creds.userId;
+
+  var draftPath = store.getState().draft.path;
+  chat.createdBy = userId;
+  chat.modifiedBy = userId;
   chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
 
   store.dispatch({ type: LOADING_UI });
 
-  var chatId = await firebase.firestore().collection('chats').add(chat)
+  var chatId = await firebase.firestore().collection(`${draftPath}/chats`).add(chat)
   .then(doc => {
     return doc.id;
   })
@@ -36,15 +39,16 @@ export async function addNewChat(chat){
 
 export async function updateMessages(chat){
   store.dispatch({ type: LOADING_UI });
+  var draftPath = store.getState().draft.path;
 
   var chatId = chat.chatId;
-  chat.modifiedBy = store.getState().user.credentials.userId;
+  chat.modifiedBy = store.getState().user.creds.userId;
   chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
   
   delete chat.chatId;
   delete chat.lastViewed;
   
-  await firebase.firestore().doc(`chats/${chatId}`).update(chat)
+  await firebase.firestore().doc(`${draftPath}/chats/${chatId}`).update(chat)
   .then(() => {
     console.log("message sent")
   })
@@ -60,8 +64,9 @@ export async function updateMessages(chat){
 
 export async function toggleMute(chatId, userId){
   store.dispatch({ type: LOADING_UI });
+  var draftPath = store.getState().draft.path;
 
-  await firebase.firestore().doc(`chats/${chatId}`).get()
+  await firebase.firestore().doc(`${draftPath}/chats/${chatId}`).get()
   .then(chatDoc => {
     var chat = chatDoc.data();
 
@@ -79,16 +84,17 @@ export async function toggleMute(chatId, userId){
 
 export async function leaveGroupChat(chat){
   store.dispatch({ type: LOADING_UI });
+  var draftPath = store.getState().draft.path;
 
   var chatId = chat.chatId;
-  chat.modifiedBy = store.getState().user.credentials.userId;
+  chat.modifiedBy = store.getState().user.creds.userId;
   chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
   
   delete chat.chatId;
   delete chat.lastViewed;
 
   if(chat.users.length > 0){
-    await firebase.firestore().doc(`chats/${chatId}`).update(chat)
+    await firebase.firestore().doc(`${draftPath}/chats/${chatId}`).update(chat)
     .then(() => {
       store.dispatch({
         type: SET_SNACKBAR,
@@ -103,7 +109,7 @@ export async function leaveGroupChat(chat){
     })
   }
   else{
-    await firebase.firestore().doc(`chats/${chatId}`).delete()
+    await firebase.firestore().doc(`${draftPath}/chats/${chatId}`).delete()
     .then(() => {
       store.dispatch({
         type: SET_SNACKBAR,

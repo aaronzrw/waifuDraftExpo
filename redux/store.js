@@ -3,6 +3,7 @@ import { ReactReduxFirebaseProvider, firebaseReducer, isLoaded } from 'react-red
 import { createFirestoreInstance, firestoreReducer } from 'redux-firestore' // <- needed if using firestore
 import thunk from 'redux-thunk';
 
+import draftReducer from './reducers/draftReducer';
 import userReducer from './reducers/userReducer';
 import dataReducer from './reducers/dataReducer';
 import uiReducer from './reducers/uiReducer';
@@ -13,6 +14,7 @@ const initialState = {};
 const middleware = [thunk];
 
 const reducers = combineReducers({
+  draft: draftReducer,
   user: userReducer,
   data: dataReducer,
   UI: uiReducer,

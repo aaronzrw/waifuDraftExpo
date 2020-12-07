@@ -8,7 +8,7 @@ const chroma = require('chroma-js')
 const { Value, timing } = Animated;
 
 const { width, height } = Dimensions.get('window');
-export default class RankGradient extends PureComponent {
+export default class RankBackground extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {

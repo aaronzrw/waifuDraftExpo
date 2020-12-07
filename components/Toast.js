@@ -15,7 +15,7 @@ export default class SnackBar extends React.Component {
       message: "",
       type: "info",
       alertColor: "#4D68FF",
-      duration: Snackbar.DURATION_SHORT
+      duration: 500
     };
     
     let uiReducerWatch = watch(store.getState, 'UI')

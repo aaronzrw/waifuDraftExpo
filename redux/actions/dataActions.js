@@ -15,10 +15,13 @@ import {
   SET_WAIFU_LIST,
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
-  SET_GAUNTLET,
+  SET_BOSSES,
   SET_BOSS_ITEMS,
-  SET_USER,
-  SET_CHATS
+  SET_USER_CREDENTIALS,
+  SET_CHATS,
+  SET_GAME_DATA,
+  SET_FIND_GAME,
+  SET_USER_WAIFUS
 } from '../types';
 
 import * as firebase from 'firebase';
@@ -26,19 +29,24 @@ import 'firebase/auth';
 
 import store from '../store';
 import _ from 'lodash'
-import lz from "lz-string";
+import ls from "lz-string";
+import * as dateFns from "date-fns"
+import * as dateFnsTz from "date-fns-timezone"
+
+export var draftPath = null
 
 export async function useRankCoin(waifu, rankCoins, points, statCoins){
+  
   store.dispatch({ type: LOADING_UI });
   
-  var user = store.getState().user.credentials;
-	await firebase.firestore().doc(`waifus/${waifu.waifuId}`).get()
+  var user = store.getState().user.creds;
+	await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).get()
 	.then(doc => {
 		var stats = getBaseStats(doc.data().rank + 1);
 		return doc.ref.update({ ...stats })
 	})
 	.then(() => {
-		return firebase.firestore().doc(`users/${user.userId}`).get()
+		return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).get()
 	})
 	.then(doc => {
     var user = doc.data();
@@ -65,10 +73,11 @@ export async function useRankCoin(waifu, rankCoins, points, statCoins){
 }
 
 export async function useStatCoin(waifu, stats){
+  
   store.dispatch({ type: LOADING_UI });
   
-  var user = store.getState().user.credentials;
-	await firebase.firestore().doc(`waifus/${waifu.waifuId}`).get()
+  var user = store.getState().user.creds;
+	await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).get()
 	.then(doc => {
     var waifu = doc.data()
     waifu.attack = waifu.attack + stats.attack;
@@ -77,7 +86,7 @@ export async function useStatCoin(waifu, stats){
 		return doc.ref.set(waifu)
 	})
 	.then(() => {
-		return firebase.firestore().doc(`users/${user.userId}`).get()
+		return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).get()
 	})
 	.then(doc => {
 		return doc.ref.update({ statCoins: doc.data().statCoins - (stats.attack + stats.defense) });
@@ -98,11 +107,48 @@ export async function useStatCoin(waifu, stats){
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export async function updateWaifuImg(waifu, imgUrl){
-  var success = false;
+export async function useHOFCoin(waifu){
+  
   store.dispatch({ type: LOADING_UI });
   
-  await firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({img : imgUrl})
+  var user = store.getState().user.creds;
+	await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).get()
+	.then(doc => {
+    
+		return doc.ref.update({ isHOF: true, HOFBy: user.userId })
+	})
+	.then(() => {
+		return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).get()
+	})
+	.then(doc => {
+    var user = doc.data();
+    var newHOFCoins = user.HOFCoins - 1;
+
+		return doc.ref.update({ HOFCoins: newHOFCoins });
+	})
+  .then(()=>{
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "success", message: `${waifu.name} Has Entered The Hall Of Fame`}
+    });
+  })
+  .catch((error) => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Error Adding Waifu To Hall Of Fame`}
+    });
+  })
+
+  store.dispatch({ type: STOP_LOADING_UI });
+}
+
+export async function updateWaifuImg(waifu, imgUrl){
+  var success = false;
+
+  
+  store.dispatch({ type: LOADING_UI });
+  
+  await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).update({img : imgUrl})
   .then(() => {
     success = true;
     store.dispatch({
@@ -125,16 +171,17 @@ export async function updateWaifuImg(waifu, imgUrl){
 
 export async function submitVote(voteCount, waifu){
   store.dispatch({ type: LOADING_UI });
+  
 
   console.log(voteCount)
 
   var voteObj = {
     vote: voteCount,
-    husbandoId: store.getState().user.credentials.userId,
-    img: store.getState().user.credentials.img
+    husbandoId: store.getState().user.creds.userId,
+    img: store.getState().user.creds.img
   };
 
-  await firebase.firestore().doc(`waifuPoll/${waifu.waifuId}`).get()
+  await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
   .then(doc => {
     var votes = doc.data().votes;
     var newVoteObj = votes.filter(x => x.husbandoId == voteObj.husbandoId);
@@ -148,7 +195,7 @@ export async function submitVote(voteCount, waifu){
     }
   })
   .then(() => {
-    return firebase.firestore().doc(`users/${voteObj.husbandoId}`).get()
+    return firebase.firestore().doc(`${draftPath}/users/${voteObj.husbandoId}`).get()
   })
   .then(doc => {
     return doc.ref.update({points: doc.data().points - voteObj.vote})
@@ -171,9 +218,10 @@ export async function submitVote(voteCount, waifu){
 
 export async function submitWaifu(waifuData){
   store.dispatch({ type: LOADING_UI });
+  
 
-  var user = store.getState().user.credentials;
-  await firebase.firestore().collection("waifus").where("link", "==", waifuData.link).get()
+  var user = store.getState().user.creds;
+  await firebase.firestore().collection(`${draftPath}/waifus`).where("link", "==", waifuData.link).get()
   .then((data) => {
 
     if(data.length > 0)
@@ -186,15 +234,15 @@ export async function submitWaifu(waifuData){
     waifuData.rank = 1;
     waifuData.attack = 3;
     waifuData.defense = 1;
-    return firebase.firestore().collection("waifus").add(waifuData)
+    return firebase.firestore().collection(`${draftPath}/waifus`).add(waifuData)
   })
   .then(() => {
-    return firebase.firestore().doc(`/users/${user.userId}`).get()
+    return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).get()
   })
   .then((doc) => {
     var updtUser = doc.data();
     updtUser.submitSlots = updtUser.submitSlots - 1;
-    return firebase.firestore().doc(`/users/${user.userId}`).set(updtUser)
+    return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).set(updtUser)
   })
   .then(() => {
     store.dispatch({
@@ -215,9 +263,10 @@ export async function submitWaifu(waifuData){
 
 export async function toggleWishListWaifu(link){
   store.dispatch({ type: LOADING_UI });
+  
 
-  var userId = store.getState().user.credentials.userId;
-  await firebase.firestore().doc(`users/${userId}`).get()
+  var userId = store.getState().user.creds.userId;
+  await firebase.firestore().doc(`${draftPath}/users/${userId}`).get()
   .then((doc) => {
     var user = doc.data();
 
@@ -237,8 +286,9 @@ export async function toggleWishListWaifu(link){
 
 export async function toggleSeriesFavorite(type, name){
   store.dispatch({ type: LOADING_UI });
+  
 
-  var user = store.getState().user.credentials;
+  var user = store.getState().user.creds;
   var favoriteSeries = user.favoriteSeries;
 
   var isFav = favoriteSeries.filter(x => x.type == type).map(x => x.series).includes(name);
@@ -249,22 +299,23 @@ export async function toggleSeriesFavorite(type, name){
     favoriteSeries.push({type, series: name})
   }
 
-  firebase.firestore().doc(`users/${user.userId}`).update({favoriteSeries: favoriteSeries})
+  firebase.firestore().doc(`${draftPath}/users/${user.userId}`).update({favoriteSeries: favoriteSeries})
   
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
 export async function buyWaifu(waifu, price = 0){
   store.dispatch({ type: LOADING_UI });
+  
 
   if(price == 0){ //default price will be 5* waifu rank
     price = waifu.rank * 5;
   }
 
-  var user = store.getState().user.credentials;
+  var user = store.getState().user.creds;
   var remPoints = user.points - price;
 
-  var waifuCurrentHusbando = (await firebase.firestore().doc(`waifus/${waifu.waifuId}`).get()).data().husbandoId
+  var waifuCurrentHusbando = (await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).get()).data().husbandoId
   if(waifuCurrentHusbando != "Shop"){
     store.dispatch({
       type: SET_SNACKBAR,
@@ -274,9 +325,9 @@ export async function buyWaifu(waifu, price = 0){
     return 
   }
 
-  await firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({husbandoId: user.userId})
+  await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).update({husbandoId: user.userId})
   .then(() => {
-    return firebase.firestore().doc(`users/${user.userId}`).update({points: remPoints});
+    return firebase.firestore().doc(`${draftPath}/users/${user.userId}`).update({points: remPoints});
   })
   .then(() => {
     store.dispatch({
@@ -295,23 +346,13 @@ export async function buyWaifu(waifu, price = 0){
 }
 
 export async function submitTrade(trade){
+  
   store.dispatch({ type: LOADING_UI });
-
-  // var weeklyPoll = store.getState().data.poll.weekly;
-  // if(weeklyPoll.isActive){
-  //   store.dispatch({
-  //     type: SET_SNACKBAR,
-  //     payload: [{ type: "error", message: "Cannot Submit Trade During Active Poll" }]
-  //   });
-    
-  //   store.dispatch({ type: STOP_LOADING_UI });
-  //   return
-  // }
 
   trade.status = "Active";
   trade.createdDate = new Date();
 
-  await firebase.firestore().collection("trades").add({...trade})
+  await firebase.firestore().collection(`${draftPath}/trades`).add({...trade})
   .then(() => {
     store.dispatch({
       type: SET_SNACKBAR,
@@ -330,8 +371,9 @@ export async function submitTrade(trade){
 
 export async function updateTrade(trade, status){
   store.dispatch({ type: LOADING_UI });
+  
 
-  await firebase.firestore().doc(`trades/${trade.id}`).update({status})
+  await firebase.firestore().doc(`${draftPath}/trades/${trade.id}`).update({status})
   .then(() => {
     store.dispatch({
       type: SET_SNACKBAR,
@@ -350,12 +392,12 @@ export async function updateTrade(trade, status){
 
 export async function fightBoss(bossFightObj){
   store.dispatch({ type: LOADING_UI })
-
+  
   var uid = await firebase.auth().currentUser.uid;
-  var waifuRef = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
+  var waifuRef = (await firebase.firestore().doc(`${draftPath}/waifus/${bossFightObj.waifuId}`).get())
   var waifu = waifuRef.data()
 
-  var bossRef = (await firebase.firestore().doc(`gauntlet/${bossFightObj.bossId}`).get())
+  var bossRef = (await firebase.firestore().doc(`${draftPath}/bosses/${bossFightObj.bossId}`).get())
   var boss = bossRef.data()
 
   var fights = _.cloneDeep(boss.fights);
@@ -418,378 +460,557 @@ export const clearErrors = () => (dispatch) => {
 }
 
 export async function setRealTimeListeners(userId){
-  store.dispatch({ type: LOADING_UI });
+  var draftSettings = null;
   
-  var unSubUser = firebase.firestore().doc(`/users/${userId}`).onSnapshot(function(doc) {
-    if (!doc.exists) {
-      store.dispatch({
-        type: SET_SNACKBAR,
-        payload: { type: "info", message: "No User" }
-      });
-      return;
-    }
+  store.dispatch({ type: UNSUB_SNAPSHOTS });
 
-    var user = _.cloneDeep(store.getState().user)
-    user.credentials = {...doc.data(), userId: doc.id};
-    firebase.firestore().collection('waifus')
-    .where('husbandoId', '==', user.credentials.userId).get()
-    .then((data) => {
-      user.waifus = [];
-      data.forEach((doc) => {
-        user.waifus.push(doc.id);
-      });
-
-      store.dispatch({
-        type: SET_USER,
-        payload: {credentials: user.credentials, waifus: user.waifus}
-      });
-
-      // if(oldUser.credentials != null && !_.isEqual(oldUser.credentials, user.credentials)){
-      //   store.dispatch({
-      //     type: SET_SNACKBAR,
-      //     payload: { type: "info", message: "User Data Updated" }
-      //   });
-      // }
-    })
-    .catch(err => {
-      console.log(err)
-    });
-  });
-  
-  var unSubOtherUsers = firebase.firestore().collection('users').onSnapshot(async function(data) {
-    var otherUsers = [];
-
-    var waifus = store.getState().data.waifuList;
-    if(waifus.length == 0){
-      waifus = await firebase.firestore().collection('waifus').get()
-      .then((data) => {
-        var arr = [];
-        data.forEach((doc) => {
-          arr.push({...doc.data(), waifuId: doc.id});
-        });
-        
-        return arr
-      })
-      .catch(err => {
-        console.log(err)
-      });
-    }
-
-    data.forEach(x => {
-      if(x.id != userId){
-        var nUser = {
-          userId: x.id,
-          userName: x.data().userName,
-          points: x.data().points,
-          submitSlots: x.data().submitSlots,
-          rankCoins: x.data().rankCoins,
-          statCoins: x.data().statCoins,
-          wishList: x.data().wishList,
-          img: x.data().img,
-          waifus: waifus.filter(y => y.husbandoId == x.id).map(x => x.waifuId)
-        };
-
-        otherUsers.push(nUser);
+  await firebase.firestore().doc(`users/${userId}`).get()
+  .then(async (doc) => {
+    var user  = doc.data();
+    
+    store.dispatch({
+      type: SET_USER_CREDENTIALS,
+      payload: {
+        userId: doc.id,
+        userName: user.userName,
+        email: user.email,
+        currentDraftId: user.currentDraftId,
+        img: user.img
       }
-    })
-
-    store.dispatch({
-      type: SET_OTHER_USERS,
-      payload: {otherUsers}
-    });
-  });
-  
-  var unSubTrades = firebase.firestore().collection('trades').onSnapshot(async function(data) {
-    var trades = [];
-
-    var waifus = store.getState().data.waifuList;
-    if(waifus.length == 0){
-      waifus = await firebase.firestore().collection('waifus').get()
-      .then((data) => {
-        var arr = [];
-        data.forEach((doc) => {
-          arr.push({...doc.data(), waifuId: doc.id});
-        });
-        
-        return arr
-      })
-      .catch(err => {
-        console.log(err)
-      });
-    }
-
-    data.forEach(x => {
-      var trade = x.data();
-      trade.id = x.id;
-      trade.createdDate = trade.createdDate.toDate()
-      var fromWaifus = waifus.filter(y => trade.from.waifus.includes(y.waifuId))
-      var toWaifus = waifus.filter(y => trade.to.waifus.includes(y.waifuId))
-
-      trade.from.waifus = fromWaifus;
-      trade.to.waifus = toWaifus;
-
-      trades.push(trade)
-    })
-
-    store.dispatch({
-      type: SET_TRADES,
-      payload: trades
-    });
-  });
-  
-  var unSubWaifus = firebase.firestore().collection("waifus").onSnapshot(async function(querySnapshot) {
-    var waifus = [];
-    querySnapshot.forEach(function(doc) {
-      waifus.push({...doc.data(), waifuId: doc.id})
     });
 
-    store.dispatch({ type: SET_WAIFU_LIST, payload: waifus });
-
-    var userInfo = store.getState().user.credentials;
-    var userWaifus = waifus.filter(x => x.husbandoId == userInfo.userId).map(x => x.waifuId);
-
-    store.dispatch({
-      type: SET_USER,
-      payload: {credentials: userInfo, waifus: userWaifus}
-    });
-  });
-
-  var unSubPollWaifus = firebase.firestore().collection("waifuPoll").onSnapshot(async function(querySnapshot) {
-    var poll = {
-      weekly: [],
-      daily: [],
-    };
-    try{
-      var userList = await firebase.firestore().collection('users').get()
-      .then((users) => {
-        var templist = [];
-        
-        users.forEach((user) => {
-          templist.push({ userId: user.id, userName: user.data().userName })
-        })
-  
-        return templist
-      })
-      .catch((err) => {
-        console.log(err)
-      })
+    var currentDraftId = user.currentDraftId;
+    if(currentDraftId){
+      draftSettings = {...(await firebase.firestore().doc(`drafts/${currentDraftId}`).get()).data().settings};
+      draftSettings.draftId = currentDraftId;
+      draftSettings.path = `drafts/${draftSettings.draftId}`;
+      draftPath = draftSettings.path;
       
-      querySnapshot.forEach(function(doc) {
-        var waifu = doc.data();
-
-        waifu.votes.forEach((vote) => {
-          var user = userList.filter(x => x.userId == vote.husbandoId)[0].userName
-          vote.husbando = user;
-        })
-
-        switch(waifu.husbandoId){
-          case "Weekly":
-            if(waifu.appearDate.toDate() <= new Date())
-              poll.weekly.push({...waifu, waifuId: doc.id})
-            break;
-          case "Daily":
-            poll.daily.push({...waifu, waifuId: doc.id})
-            break;
-        }
-      });
-      
-      //order weeklies by appearDate
-      poll.weekly = _.orderBy(poll.weekly,['appearDate'], ['asc'])
-      store.dispatch({
-        type: SET_POLL_WAIFUS,
-        payload: poll
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_POLL_WAIFUS,
-        payload: {}
-      });
-    }
-    // store.dispatch({ type: STOP_LOADING_UI });
-  });
-  
-  var unSubWeeklyPoll = firebase.firestore().doc("poll/weekly").onSnapshot(function(doc) {
-    try{
-      var pollObj = {...doc.data(), type: "weekly"};
-      store.dispatch({
-        type: SET_WEEKLY_POLL,
-        payload: pollObj
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_WEEKLY_POLL,
-        payload: null
-      });
-    }
-    // store.dispatch({ type: STOP_LOADING_UI });
-  });
-  
-  var unSubDailyPoll = firebase.firestore().doc("poll/daily").onSnapshot(function(doc) {
-    try{
-      var pollObj = {...doc.data(), type: "daily"};
-
-      store.dispatch({
-        type: SET_DAILY_POLL,
-        payload: pollObj
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_DAILY_POLL,
-        payload: null
-      });
-    }
-    // store.dispatch({ type: STOP_LOADING_UI });
-  });
-  
-  var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
-    try{
-      var bosses = [];
-      querySnapshot.forEach(function(doc) {
-        var boss = doc.data();
-        var now = firebase.firestore.Timestamp.now().toDate()
-
-        if(boss.appearTime.toDate() <= now && now <= boss.leaveTime.toDate()){
-          bosses.push({bossId: doc.id , ...boss});
-        }
-      });
-
-      bosses = _.orderBy(bosses,['appearTime'], ['asc'])
-      store.dispatch({
-        type: SET_GAUNTLET,
-        payload: bosses
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_GAUNTLET,
-        payload: []
-      });
-    }
-    store.dispatch({ type: STOP_LOADING_UI });
-    store.dispatch({ type: STOP_LOADING_DATA });
-  });
-  
-  var unSubChats = firebase.firestore().collection("chats").where("users", 'array-contains', userId).onSnapshot(function(querySnapshot) {
-    try{
-      var chats = [];
-      querySnapshot.forEach(function(doc) {
-        chats.push({chatId: doc.id , ...doc.data()});
-      });
-
-      chats.forEach(chat => {
-        var messages = [];
-        chat.messages.map(message => {
-          var msg = _.cloneDeep(message)
-          var decodedMsg = lz.decompressFromUTF16(msg);
-          var parsedMsg = JSON.parse(decodedMsg)
-          messages.push(parsedMsg)
-        });
-
-        chat.messages = messages;
-      })
-
-      store.dispatch({
-        type: SET_CHATS,
-        payload: chats
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_CHATS,
-        payload: []
-      });
-    }
-
-    store.dispatch({ type: STOP_LOADING_UI });
-  });
-
-  var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
-    try{
-      var items = [];
-      querySnapshot.forEach(function(doc) {
-        items.push({...doc.data()});
-      });
-
-      store.dispatch({
-        type: SET_BOSS_ITEMS,
-        payload: items
-      });
-    }
-    catch(err){
-      console.log(err);
-      store.dispatch({
-        type: SET_BOSS_ITEMS,
-        payload: []
-      });
-    }
-
-    store.dispatch({ type: STOP_LOADING_UI });
-  });
-
-  // var searchItems = store.getState().data.searchItems;
-  // if(_.isEmpty(searchItems)){
-  //   var compressSearchJson = require('../../assets/SearchFile.json');
-  //   searchItems = JSON.parse(ls.decompress(compressSearchJson));
-  //   store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
-  // }
-
-  store.dispatch({ type: SUB_SNAPSHOTS, payload: 
-    {
-      unSubUser,
-      unSubOtherUsers,
-      unSubWaifus,
-      unSubPollWaifus,
-      unSubDailyPoll,
-      unSubWeeklyPoll,
-      unSubTrades,
-      unSubGauntlet,
-      unSubChats,
-      unSubBossItems
+      store.dispatch({ type: SET_GAME_DATA, payload: draftSettings });
     }
   })
+
+  if(draftSettings == null){
+    store.dispatch({ type: SET_FIND_GAME });
+    return
+  }
+
+  const userCredentialsPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubUserCred = firebase.firestore().doc(`users/${userId}`).onSnapshot(function(doc) {
+        if (!doc.exists) {
+          store.dispatch({
+            type: SET_SNACKBAR,
+            payload: { type: "info", message: "No User" }
+          });
+          return;
+        }
+  
+        var user = {
+          userId: doc.id,
+          email: doc.data().email,
+          currentDraftId: doc.data().currentDraftId
+        };
+
+        store.dispatch({
+          type: SET_USER_CREDENTIALS,
+          payload: {...user}
+        });
+      });
+      resolve({name: "unSubUserCred", func: unSubUserCred})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const userDraftPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubUserDraft = firebase.firestore().doc(`${draftPath}/users/${userId}`).onSnapshot(async function(doc) {
+        if (!doc.exists) {
+          store.dispatch({
+            type: SET_SNACKBAR,
+            payload: { type: "info", message: "No User" }
+          });
+          return;
+        }
+          
+        store.dispatch({
+          type: SET_USER_CREDENTIALS,
+          payload: {...doc.data()}
+        });
+  
+        var waifus = (await firebase.firestore().collection(`${draftPath}/waifus`)
+        .where('husbandoId', '==', userId).get()).docs.map(x => x.id);
+        
+        store.dispatch({
+          type: SET_USER_WAIFUS,
+          payload: waifus
+        });
+      });
+      resolve({name: "unSubUserDraft", func: unSubUserDraft})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const otherUserPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubOtherUsers = firebase.firestore().collection(`${draftPath}/users`).onSnapshot(async function(data) {
+        var waifus = store.getState().data.waifuList;
+        if(waifus.length == 0){
+          waifus = (await firebase.firestore().collection(`${draftPath}/waifus`).get()).docs.map(x => { return {...x.data(), waifuId: x.id} })
+        }
+  
+        var otherUsers = data.docs.filter(x => x.id != userId).map(x => {
+          return {
+            userId: x.id,
+            userName: x.data().userName,
+            points: x.data().points,
+            rankCoins: x.data().rankCoins,
+            statCoins: x.data().statCoins,
+            HOFCoins: x.data().HOFCoins,
+            wishList: x.data().wishList,
+            favoriteSeries: x.data().favoriteSeries,
+            img: x.data().img,
+            waifus: waifus.filter(y => y.husbandoId == x.id).map(x => x.waifuId)
+          }
+        })
+  
+        store.dispatch({
+          type: SET_OTHER_USERS,
+          payload: {otherUsers}
+        });
+      });
+      resolve({name: "unSubOtherUsers", func: unSubOtherUsers})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const tradesPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubTrades = firebase.firestore().collection(`${draftPath}/trades`).onSnapshot(async function(data) {
+        var trades = [];
+  
+        var waifus = store.getState().data.waifuList;
+        if(waifus.length == 0){
+          waifus = (await firebase.firestore().collection(`${draftPath}/waifus`).get()).docs.map(x => { return {...x.data(), waifuId: x.id} })
+        }
+  
+        var trades = data.docs.map(x => {
+          var trade = x.data();
+          trade.id = x.id;
+          trade.createdDate = trade.createdDate.toDate()
+          var fromWaifus = waifus.filter(y => trade.from.waifus.includes(y.waifuId))
+          var toWaifus = waifus.filter(y => trade.to.waifus.includes(y.waifuId))
+  
+          trade.from.waifus = fromWaifus;
+          trade.to.waifus = toWaifus;
+          
+          return trade
+        })
+  
+        store.dispatch({
+          type: SET_TRADES,
+          payload: trades
+        });
+      });
+      resolve({name: "unSubTrades", func: unSubTrades})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const waifusPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubWaifus = firebase.firestore().collection(`${draftPath}/waifus`).onSnapshot(async function(querySnapshot) {
+        var waifus = [];
+        querySnapshot.forEach(function(doc) {
+          waifus.push({...doc.data(), waifuId: doc.id})
+        });
+  
+        store.dispatch({ type: SET_WAIFU_LIST, payload: waifus });
+  
+        var userInfo = store.getState().user.creds;
+        var userWaifus = waifus.filter(x => x.husbandoId == userInfo.userId).map(x => x.waifuId);
+  
+        store.dispatch({
+          type: SET_USER_CREDENTIALS,
+          payload: {creds: userInfo, waifus: userWaifus}
+        });
+      });
+      resolve({name: "unSubWaifus", func: unSubWaifus})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const pollWaifusPromise = new Promise((resolve, reject) => {
+    try{
+      var draft = store.getState().draft;
+      var tz = draft.timeZone;
+
+      var nowDt = dateFnsTz.convertToTimeZone(firebase.firestore.Timestamp.now().toDate(), {timeZone: tz})
+      var weekOpen = dateFns.startOfWeek(nowDt, {weekStartsOn: 1})
+
+      var pollOpen = draft.weeklyPoll.open.toDate();
+      weekOpen = dateFns.set(weekOpen, {hours: pollOpen.getHours(), minutes: pollOpen.getMinutes(), seconds: pollOpen.getSeconds()})
+
+      //monday
+      var unSubPollWaifus = firebase.firestore().collection(`${draftPath}/waifus`)
+      .where("appearDate", ">=", firebase.firestore.Timestamp.fromDate(weekOpen))
+      .onSnapshot(async function(querySnapshot) {
+        var poll = {
+          weekly: [],
+          daily: [],
+        };
+
+        try{
+          var userList = (await firebase.firestore().collection(`${draftPath}/users`).get()).docs.map(x => {
+            return {userId: x.id, userName: x.data().userName}
+          })
+          
+          querySnapshot.forEach(function(doc) {
+            var waifu = doc.data();
+  
+            waifu.votes.forEach((vote) => {
+              var user = userList.filter(x => x.userId == vote.husbandoId)[0].userName
+              vote.husbando = user;
+            })
+  
+            if(waifu.isWeekly && waifu.appearDate.toDate() <= new Date())
+              poll.weekly.push({...waifu, waifuId: doc.id})
+              
+            if(waifu.isDaily)
+              poll.daily.push({...waifu, waifuId: doc.id})
+            
+            // switch(waifu.husbandoId){
+            //   case "Weekly":
+            //     if(waifu.appearDate.toDate() <= new Date())
+            //     break;
+            //   case "Daily":
+            //     poll.daily.push({...waifu, waifuId: doc.id})
+            //     break;
+            // }
+          });
+          
+          //order weeklies by appearDate
+          poll.weekly = _.orderBy(poll.weekly,['appearDate'], ['asc'])
+          store.dispatch({
+            type: SET_POLL_WAIFUS,
+            payload: poll
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_POLL_WAIFUS,
+            payload: {}
+          });
+        }
+      });
+      resolve({name: "unSubPollWaifus", func: unSubPollWaifus})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  // const weeklyPollPromise = new Promise((resolve, reject) => {
+  //   try{
+  //     var unSubWeeklyPoll = firebase.firestore().doc(`${draftPath}/poll/weekly`).onSnapshot(function(doc) {
+  //       try{
+  //         var pollObj = {...doc.data(), type: "weekly"};
+  //         store.dispatch({
+  //           type: SET_WEEKLY_POLL,
+  //           payload: pollObj
+  //         });
+  //       }
+  //       catch(err){
+  //         console.log(err);
+  //         store.dispatch({
+  //           type: SET_WEEKLY_POLL,
+  //           payload: null
+  //         });
+  //       }
+  //     });
+  //     resolve({name: "unSubWeeklyPoll", func: unSubWeeklyPoll})
+  //   }
+  //   catch(ex){
+  //     console.log(ex)
+  //     reject()
+  //   }
+  // });
+  // const dailyPollPromise = new Promise((resolve, reject) => {
+  //   try{
+  //     var unSubDailyPoll = firebase.firestore().doc(`${draftPath}/poll/daily`).onSnapshot(function(doc) {
+  //       try{
+  //         var pollObj = {...doc.data(), type: "daily"};
+  //         store.dispatch({
+  //           type: SET_DAILY_POLL,
+  //           payload: pollObj
+  //         });
+  //       }
+  //       catch(err){
+  //         console.log(err);
+  //         store.dispatch({
+  //           type: SET_DAILY_POLL,
+  //           payload: null
+  //         });
+  //       }
+  //     });
+  //     resolve({name: "unSubDailyPoll", func: unSubDailyPoll})
+  //   }
+  //   catch(ex){
+  //     console.log(ex)
+  //     reject()
+  //   }
+  // });
+  const bossPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubBosses = firebase.firestore().collection(`${draftPath}/bosses`).onSnapshot(function(querySnapshot) {
+        try{
+          var bosses = [];
+          querySnapshot.forEach(function(doc) {
+            var boss = doc.data();
+            var now = firebase.firestore.Timestamp.now().toDate()
+  
+            if(boss.appearDate.toDate() <= now && now <= boss.leaveDate.toDate()){
+              bosses.push({bossId: doc.id , ...boss});
+            }
+          });
+  
+          bosses = _.orderBy(bosses,['appearDate'], ['asc'])
+          store.dispatch({
+            type: SET_BOSSES,
+            payload: bosses
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_BOSSES,
+            payload: []
+          });
+        }
+      });
+      resolve({name: "unSubBosses", func: unSubBosses})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const chatsPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubChats = firebase.firestore().collection(`${draftPath}/chats`).where("users", 'array-contains', userId).onSnapshot(function(querySnapshot) {
+        try{
+          var chats = [];
+          querySnapshot.forEach(function(doc) {
+            chats.push({chatId: doc.id , ...doc.data()});
+          });
+  
+          chats.forEach(chat => {
+            var messages = [];
+            chat.messages.map(message => {
+              var msg = _.cloneDeep(message)
+              var decodedMsg = lz.decompressFromUTF16(msg);
+              var parsedMsg = JSON.parse(decodedMsg)
+              messages.push(parsedMsg)
+            });
+  
+            chat.messages = messages;
+          })
+  
+          store.dispatch({
+            type: SET_CHATS,
+            payload: chats
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_CHATS,
+            payload: []
+          });
+        }
+  
+      });
+      resolve({name: "unSubChats", func: unSubChats})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+  const bossItemsPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubBossItems = firebase.firestore().collection(`${draftPath}/bossItems`).onSnapshot(function(querySnapshot) {
+        try{
+          var items = [];
+          querySnapshot.forEach(function(doc) {
+            items.push({...doc.data()});
+          });
+    
+          store.dispatch({
+            type: SET_BOSS_ITEMS,
+            payload: items
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_BOSS_ITEMS,
+            payload: []
+          });
+        }
+      });
+      resolve({name: "unSubBossItems", func: unSubBossItems})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+
+  const draftPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubDraft = firebase.firestore().doc(`${draftPath}`).onSnapshot(function(doc) {
+        try{
+          draftSettings = doc.data().settings;
+          draftSettings.draftId = doc.id;
+          draftSettings.path = `drafts/${draftSettings.draftId}`;
+          draftPath = draftSettings.path;
+          
+          store.dispatch({ type: SET_GAME_DATA, payload: draftSettings });
+          
+          store.dispatch({
+            type: SET_DAILY_POLL,
+            payload: draftSettings.dailyPoll
+          });
+
+          store.dispatch({
+            type: SET_WEEKLY_POLL,
+            payload: draftSettings.weeklyPoll
+          });
+        }
+        catch(err){
+          console.log(err);
+        }
+      });
+      resolve({name: "unSubDraft", func: unSubDraft})
+    }
+    catch(ex){
+      console.log(ex)
+      reject()
+    }
+  });
+
+  //call get search data async
+  getSearchDataAsync()
+
+  Promise.all([userCredentialsPromise,
+    userDraftPromise, otherUserPromise,
+    tradesPromise, waifusPromise,
+    pollWaifusPromise, bossPromise,
+    chatsPromise, bossItemsPromise, draftPromise])
+  .then((values) => {
+    var subscriptions = {}
+    values.forEach(x => {
+      subscriptions[x.name] = x.func
+    })
+
+    store.dispatch({
+      type: SUB_SNAPSHOTS,
+      payload: {...subscriptions}
+    })
+  });
+  
+}
+
+//some places need to wait for search data instead of calling it async
+export function getSearchData(){
+  try{
+    var searchItems = store.getState().data.searchItems;
+    if(_.isEmpty(searchItems)){
+      var compressSearchJson = require('../../assets/SearchFile.json');
+      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+    }
+
+    return searchItems
+  }
+  catch(ex){
+    console.log(ex)
+
+    return {}
+  }
+}
+
+export async function getSearchDataAsync(){
+  try{
+    var searchItems = store.getState().data.searchItems;
+    if(_.isEmpty(searchItems)){
+      var compressSearchJson = require('../../assets/SearchFile.json');
+      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+    }
+    return searchItems
+  }
+  catch(ex){
+    console.log(ex)
+
+    return {}
+  }
 }
 
 async function buildBossRewardStr(reward){
+
   var result = "Boss Defeated! Rewards Gained";
   var rewards = _.keys(reward);
   var uid = await firebase.auth().currentUser.uid;
-  var user = await firebase.firestore().doc(`users/${uid}`).get()
+  var user = await firebase.firestore().doc(`${draftPath}/users/${uid}`).get()
 
   rewards.forEach(async x => {
-    switch(x){
-      case "points":
-        // result += `\n ${reward[x]} Points`
-        await user.ref.update({points: user.data().points + reward[x]})
-        /*store.dispatch({
-          type: SET_SNACKBAR,
-          payload: [{ type: "info", message:  `${reward[x]} Points Added` }]
-        }); */
-        break;
-      case "statCoins":
-        // result += `\n ${reward[x]} Stat Coins`
-        await user.ref.update({statCoins: user.data().statCoins + reward[x]})
-        /*store.dispatch({
-          type: SET_SNACKBAR,
-          payload: [{ type: "info", message: `${reward[x]} Stat Coins Added` }]
-        }); */
-        break;
-      case "rankCoins":
-        // result += `\n ${reward[x]} Rank Coins`
-        await user.ref.update({rankCoins: user.data().rankCoins + reward[x]})
-        /*store.dispatch({
-          type: SET_SNACKBAR,
-          payload: [{ type: "info", message: `${reward[x]} Rank Coins Added` }]
-        }); */
-        break;
-    }
+    await user.ref.update({points: user.data()[x] + reward[x]})
+    // switch(x){
+    //   case "points":
+    //     // result += `\n ${reward[x]} Points`
+    //     /*store.dispatch({
+    //       type: SET_SNACKBAR,
+    //       payload: [{ type: "info", message:  `${reward[x]} Points Added` }]
+    //     }); */
+    //     break;
+    //   case "statCoins":
+    //     // result += `\n ${reward[x]} Stat Coins`
+    //     await user.ref.update({statCoins: user.data().statCoins + reward[x]})
+    //     /*store.dispatch({
+    //       type: SET_SNACKBAR,
+    //       payload: [{ type: "info", message: `${reward[x]} Stat Coins Added` }]
+    //     }); */
+    //     break;
+    //   case "rankCoins":
+    //     // result += `\n ${reward[x]} Rank Coins`
+    //     await user.ref.update({rankCoins: user.data().rankCoins + reward[x]})
+    //     /*store.dispatch({
+    //       type: SET_SNACKBAR,
+    //       payload: [{ type: "info", message: `${reward[x]} Rank Coins Added` }]
+    //     }); */
+    //     break;
+    //   case "bossCoins":
+    //     // result += `\n ${reward[x]} Rank Coins`
+    //     await user.ref.update({rankCoins: user.data().bossCoins + reward[x]})
+    //     /*store.dispatch({
+    //       type: SET_SNACKBAR,
+    //       payload: [{ type: "info", message: `${reward[x]} Rank Coins Added` }]
+    //     }); */
+    //     break;
+    //}
   })
 
   return result;
@@ -871,4 +1092,9 @@ export function getRankColor(rank){
 			break;
 	}
 	return rankColor;
+}
+
+export function getZonedDate(date = new Date()){
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return dateFnsTz.convertToTimeZone(date, {timeZone: tz})
 }

@@ -5,35 +5,38 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighl
 import * as WebBrowser from 'expo-web-browser';
 
 import _ from 'lodash'
-const chroma = require('chroma-js')
 
 import Swiper from 'react-native-swiper'
-import NumericInput from 'react-native-numeric-input'
+import SwipeIndicator from '../components/SwipeIndicator'
 
-import TopVote from '../assets/images/TopVote.png'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
-import {useRankCoin, useStatCoin} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
+import favoriteHeart from '../assets/images/FavoriteHeart.png'
+import unfavoriteHeart from '../assets/images/UnfavoriteHeart.png'
 
+const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
 export default class OtherUserCharDetails extends Component {
   constructor(props){
     super();
-    this.state ={
+    this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       waifu: props.route.params.waifu,
-      showRankCoinConf: false,
+      fabOpen: false
     };
     
+    this.changeFabState = this.changeFabState.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
     let dataReducerWatch = watch(store.getState, 'data')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
@@ -65,17 +68,42 @@ export default class OtherUserCharDetails extends Component {
     WebBrowser.openBrowserAsync(this.state.waifu.link);
   };
 
+  changeFabState(){
+    var fabState = this.state.fabOpen;
+    this.setState({fabOpen: !fabState})
+  }
+
   render(){
     const waifu = this.state.waifu;
+    const userInfo = store.getState().user.creds;
 
-    var displayName = waifu.name;
-    if(waifu.type != 'Anime-Manga')
-      displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
+    const isFav = userInfo.wishList.includes(waifu.link);
+
+    var waifuActions =
+    [
+      { 
+        label: 'Open Waifu Link',
+        icon: "link-variant",
+        onPress: () => this.waifuLinkPress()
+      },
+      {
+        icon: ({ size, color }) =>
+          (
+          <Image
+            source={isFav ? unfavoriteHeart : favoriteHeart}
+            style={{ width: size , height: size}}
+          />
+        ),
+        label: isFav ? 'Remove From Favorite' : 'Add To Favorites',
+        onPress: () => console.log('favorite')
+      }
+    ]
 
     return (
       <View style={[styles.container]}>
         <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
           <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: waifu.img}}>
+            <SwipeIndicator horiSwipe={true} />
             <View style={styles.bgView}>
               <Swiper
                 index={0}
@@ -86,16 +114,9 @@ export default class OtherUserCharDetails extends Component {
                 {/* Stats List */}
                 <View style={{flex:1}}>
                   {/* Name */}
+                  
                   <View style={styles.nameView}>
-                    <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
-
-                    <FAB
-                      small
-                      color="white"
-                      style={[styles.fab, {alignSelf: "center"}]}
-                      icon="link-variant"
-                      onPress={this.waifuLinkPress}
-                    />
+                    <Text style={[styles.text,styles.nameText,{fontSize: 45}]}>{waifu.name}</Text>
                   </View>
 
                   <View style={styles.statsView}>
@@ -104,15 +125,22 @@ export default class OtherUserCharDetails extends Component {
                       <Text style={styles.statText}>DEF: {waifu.defense}</Text>
                     </View>
                   </View>
-                  
-
                 </View>
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails waifu={waifu}/> : <ComicCharDetails waifu={waifu} />}
                 </View>
               </Swiper>
+              
+              <FAB.Group
+                fabStyle={{backgroundColor: chroma('aqua').hex()}}
+                open={this.state.fabOpen}
+                icon={'settings'}
+                actions={waifuActions}
+                onStateChange={() => this.changeFabState()}
+              />
+
             </View>
           </ImageBackground>
         </ImageBackground>

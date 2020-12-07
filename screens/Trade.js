@@ -22,6 +22,7 @@ export default class Trade extends Component {
 
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       otherUsers: store.getState().user.otherUsers,
       waifuList: store.getState().data.waifuList
     };
@@ -33,6 +34,8 @@ export default class Trade extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 

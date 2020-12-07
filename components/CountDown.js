@@ -36,13 +36,13 @@ export default class Countdown extends Component {
   constructor(props) {
 		super(props);
 		
-		var isActive = moment(this.props.activeTill, "MM DD YYYY, h:mm a").toDate() > moment().toDate();
-		if(this.props.type == "DAILY")
-			isActive = this.props.isActive
+		var isActive = moment(this.props.close, "MM DD YYYY, h:mm a").toDate() > moment().toDate();
+		// if(this.props.type == "DAILY")
+		// 	isActive = this.props.isActive
 
 		this.state = {
 			isActive,
-			activeTill: this.props.activeTill,
+			close: this.props.close,
 			timeFormat:"MM DD YYYY, h:mm a",
 			days: undefined,
 			hours: undefined,
@@ -54,39 +54,39 @@ export default class Countdown extends Component {
 
 	componentDidMount() {
 		this.interval = setInterval(() => {
-			const { activeTill, timeFormat } = this.state;
-			const then = moment(activeTill, timeFormat);
+			const { close, timeFormat } = this.state;
+			const then = moment(close, timeFormat);
 			const date = moment(then).countdown()
 			const days = date.days;
 			const hours = date.hours;
 			const minutes = date.minutes;
 			const seconds = date.seconds;
 
-			var isActive = moment(activeTill, timeFormat).toDate() > moment().toDate();
+			var isActive = moment(close, timeFormat).toDate() > moment().toDate();
 
-			if(this.state.type == "DAILY")
-				isActive = this.state.isActive
+			// if(this.state.type == "DAILY")
+			// 	isActive = this.state.isActive
 
 			this.setState({ isActive, days, hours, minutes, seconds });
 		}, 1000);
 	}
 
 	componentWillReceiveProps(props){
-		this.setState({activeTill: props.activeTill, type: props.type})
+		this.setState({close: props.close, type: props.type})
 		
 		clearInterval(this.interval);
 		this.interval = setInterval(() => {
-			const { activeTill, timeFormat } = this.state;
-			const then = moment(activeTill, timeFormat);
+			const { close, timeFormat } = this.state;
+			const then = moment(close, timeFormat);
 			const date = moment(then).countdown()
 			const days = date.days.toString();
 			const hours = date.hours.toString();
 			const minutes = date.minutes.toString();
 			const seconds = date.seconds.toString();
 
-			var isActive = moment(activeTill, timeFormat).toDate() > moment().toDate();
-			if(props.type == "DAILY")
-				isActive = props.isActive
+			var isActive = moment(close, timeFormat).toDate() > moment().toDate();
+			// if(props.type == "DAILY")
+			// 	isActive = props.isActive
 
 			this.setState({ isActive, days, hours, minutes, seconds });
 		}, 1000);

@@ -47,10 +47,10 @@ const FadeInView = props => {
     <Animated.View // Special animatable View
       style={{
         ...props.style,
-				opacity: fadeAnim, // Bind opacity to animated value
-				transform: [
-					{ translateY: yPosition }
-				]
+		opacity: fadeAnim, // Bind opacity to animated value
+		transform: [
+			{ translateY: yPosition }
+		]
       }}>
       {props.children}
     </Animated.View>

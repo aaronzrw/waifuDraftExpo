@@ -1,7 +1,12 @@
+// Game reducer type
+export const SET_GAME_DATA = 'SET_GAME_DATA'
+export const SET_FIND_GAME = 'SET_FIND_GAME'
+
 // User reducer types
 export const SET_AUTHENTICATED = 'SET_AUTHENTICATED';
 export const SET_UNAUTHENTICATED = 'SET_UNAUTHENTICATED';
-export const SET_USER = 'SET_USER';
+export const SET_USER_CREDENTIALS = 'SET_USER_CREDENTIALS';
+export const SET_USER_WAIFUS = 'SET_USER_WAIFUS';
 export const SET_OTHER_USERS = 'SET_OTHER_USERS';
 export const SET_TOKEN = 'SET_TOKEN';
 export const LOADING_USER = 'LOADING_USER';
@@ -24,7 +29,7 @@ export const SET_SEARCH_DATA = 'SET_SEARCH_DATA';
 export const SUBMIT_WAIFU = 'SUBMIT_WAIFU';
 export const SET_WAIFU_LIST = 'SET_WAIFU_LIST';
 export const SET_TRADES = 'SET_TRADES';
-export const SET_GAUNTLET = 'SET_GAUNTLET';
+export const SET_BOSSES = 'SET_BOSSES';
 export const SET_BOSS_ITEMS = 'SET_BOSS_ITEMS';
 
 //Chat reducer types

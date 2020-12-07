@@ -25,7 +25,7 @@ export default class BossShop extends Component {
     this.state = {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       shopItems: store.getState().data.bossItems,
       size: {width,height}
     };
@@ -44,10 +44,10 @@ export default class BossShop extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials })
+      this.setState({ userInfo: newVal.creds })
     }))
     
-    this.setState({ shopItems: store.getState().data.bossItems, userInfo: store.getState().user.credentials })
+    this.setState({ shopItems: store.getState().data.bossItems, userInfo: store.getState().user.creds })
   }
 
   unSetSubscribes(){

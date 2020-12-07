@@ -53,10 +53,11 @@ export default class ViewChat extends Component {
 
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       chatImg: null,
       name: null,
       chatUsers: [],
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       otherUsers: store.getState().user.otherUsers,
     };
     
@@ -70,13 +71,15 @@ export default class ViewChat extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let userReducerWatch = watch(store.getState, 'user')
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({userInfo: newVal.credentials, otherUsers: newVal.otherUsers})
+      this.setState({userInfo: newVal.creds, otherUsers: newVal.otherUsers})
     }))
     
-    var userInfo = store.getState().user.credentials;
+    var userInfo = store.getState().user.creds;
     var otherUsers = store.getState().user.otherUsers;
     this.setState({
       userInfo,
@@ -112,7 +115,7 @@ export default class ViewChat extends Component {
       chatUsers.push(item.userId)
     }
 
-    console.log(chatUsers)
+    // console.log(chatUsers)
     this.setState({ chatUsers })
   }
 
@@ -184,10 +187,23 @@ export default class ViewChat extends Component {
   }
   
   render(){
+    
     return (
       <>
         <Swiper
           index={0}
+          onIndexChanged={(index) => {
+            switch(index){
+              case 0: //select users view
+                this.state.goBackFunc(this.state.navigation)
+                break;
+              case 1: //group info view
+                this.state.goBackFunc(this.state.navigation, true, () => this.handleSlideChange("back"))
+                break;
+              default:
+                this.state.goBackFunc(this.state.navigation)
+            }
+          }}
           showsPagination={false}
           style={{backgroundColor: "white"}}
           scrollEnabled={false}
@@ -204,13 +220,7 @@ export default class ViewChat extends Component {
               renderItem={({ item, index }) => <ChatUserRow item={item} index={index} selectUser={this.selectUser} />}
               keyExtractor={item => item.id}
             />
-            {/*
-            <FAB
-              color="white"
-              style={styles.backFab}
-              icon="arrow-left-thick"
-              onPress={() => this.handleSlideChange("back")}
-            /> */}
+            
             <FAB
               color="white"
               style={styles.nextFab}
@@ -261,23 +271,16 @@ export default class ViewChat extends Component {
                 >Create Group</Button>
               </View>
             </ImageBackground>
-            
-            <FAB
-              color="white"
-              style={styles.backFab}
-              icon="arrow-left-thick"
-              onPress={() => this.handleSlideChange("back")}
-            />
           </View>
         
         </Swiper>
         
-        <FAB
+        {/*<FAB
           color="white"
           style={styles.exitFab}
           icon="close"
           onPress={() => this.state.navigation.goBack()}
-        />
+        />*/}
       </>
     );
   }

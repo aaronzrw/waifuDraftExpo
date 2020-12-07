@@ -30,8 +30,9 @@ export default class Shop extends Component {
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
 			loading: store.getState().data.loading,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       shop: store.getState().data.waifuList.filter(x => x.husbandoId == "Shop"),
       size: {width,height}
     };
@@ -42,6 +43,8 @@ export default class Shop extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+    
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -51,11 +54,11 @@ export default class Shop extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials })
+      this.setState({ userInfo: newVal.creds })
     }))
     
     var shop = store.getState().data.waifuList.filter(x => x.husbandoId == "Shop");
-    this.setState({ shop, userInfo: store.getState().user.credentials })
+    this.setState({ shop, userInfo: store.getState().user.creds })
   }
 
   unSetSubscribes(){

@@ -17,7 +17,7 @@ function Row({ item, index, selectChat }){
   const chatImg = item.img ?? null;
   const isGroupChat = item.name != null;
 
-  var user = store.getState().user.credentials;
+  var user = store.getState().user.creds;
   var otherUserId = item.users.filter(x => x != user.userId)[0];
   var otherUser = store.getState().user.otherUsers.filter(x => x.userId == otherUserId)[0];
 
@@ -71,8 +71,9 @@ export default class Chat extends Component {
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
 			loading: store.getState().data.loading,
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       chats: store.getState().chat.chats,
       size: {width,height}
     };
@@ -84,6 +85,8 @@ export default class Chat extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+
     let chatReducerWatch = watch(store.getState, 'chat')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -93,11 +96,11 @@ export default class Chat extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials })
+      this.setState({ userInfo: newVal.creds })
     }))
     
     var chats = store.getState().chat.chats;
-    this.setState({ chats, userInfo: store.getState().user.credentials })
+    this.setState({ chats, userInfo: store.getState().user.creds })
   }
 
   unSetSubscribes(){

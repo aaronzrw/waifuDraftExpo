@@ -3,7 +3,9 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Button, Image,
 import { Text, FAB, TouchableRipple } from 'react-native-paper';
 import Swiper from 'react-native-swiper'
 
-import * as WebBrowser from 'expo-web-browser';
+import { FlatGrid } from 'react-native-super-grid';
+import { getSearchData } from '../redux/actions/dataActions';
+import { useNavigation } from '@react-navigation/native';
 
 import _ from 'lodash';
 const chroma = require('chroma-js')
@@ -77,21 +79,33 @@ const styles = StyleSheet.create({
     fontFamily:"Edo",
     fontSize: 18,
     margin: 0,
+  },
+  itemContainer: {
+    justifyContent: 'flex-end',
+    borderRadius: 10,
+    // padding: 10,
+    height: 250,
+    overflow: "hidden",
+    shadowColor: '#000',
+    shadowOpacity: 1,
+    elevation: 10
   }
 });
 
 const { width, height } = Dimensions.get('window');
-const AMCharDetails = ({ card }) => {
+const AMCharDetails = ({ waifu }) => {
   //Anime-Manga Variables
-  const tags = card.tags.concat(card.traits);
+  const tags = waifu.tags.concat(waifu.traits);
   const [detailViewHeight, setDetailViewHeight] = React.useState(height);
   const onLayout = (e) => {
     //setDetailViewHeight(e.nativeEvent.layout.height)
   }
+  
+  var searchItems = getSearchData();
+  var series = searchItems.views["Anime-Manga"].items.flatMap(x => x.items).filter(x => waifu.animes.concat(waifu.mangas).includes(x.name));
+  series = _.orderBy(series, ["intYear"], ['asc'])
 
-  const waifuLinkPress = async () => {
-    WebBrowser.openBrowserAsync(card.link);
-  };
+  const navigation = useNavigation();
 
   return(
     <View style={styles.container}>
@@ -124,26 +138,47 @@ const AMCharDetails = ({ card }) => {
           <View style={{flex: 1}}>
             <View style={{flex:1}}>
               <View style={styles.titleView}>
-                <Text style={[styles.text, styles.titleShadow,{fontSize: 40, color:"white"}]}>Animes</Text>
+                <Text style={[styles.text, styles.titleShadow,{fontSize: 40, color:"white"}]}>Series</Text>
               </View>
-              <View style={{flex:1}}>
-                <FlatList
-                  data={card.animes}
-                  renderItem={({ item, index }) => <Row item={item} index={index} />}
-                  keyExtractor={item => item}
-                />
-              </View>
-            </View>
 
-            <View style={{flex:1}}>
-              <View style={styles.titleView}>
-                <Text style={[styles.text, styles.titleShadow, {fontSize: 40, color:"white"}]}>Mangas</Text>
-              </View>
               <View style={{flex:1}}>
-                <FlatList
-                  data={card.mangas}
-                  renderItem={({ item, index }) => <Row item={item} index={index} />}
-                  keyExtractor={item => item}
+                <FlatGrid
+                  itemDimension={150}
+                  items={series}
+                  style={styles.container}
+                  spacing={10}
+                  renderItem={({item, index}) =>
+                    <TouchableOpacity activeOpacity={.25}
+                      style={[styles.itemContainer]}
+                      onPress={() => {
+                        var navState = navigation.dangerouslyGetState()
+                        var chars = searchItems.characters[waifu.type].items.filter(x => x.animes.concat(x.mangas).includes(item.name));
+
+                        if(navState.routeNames.includes("Search")){
+                          navigation.jumpTo("Search", {screen :"Search", params: { searchText: item.name, series, chars, type: "Anime-Manga", autoLoad: true}})
+                        }
+                        else{
+                          navigation.navigate("Search", {screen :"Search", params: { searchText: item.name, series, chars, type: "Anime-Manga", autoLoad: true}})
+                        }
+                      }}
+                    >
+                      <Image
+                        style={{
+                          flex: 1,
+                          resizeMode: "cover",
+                          borderRadius: 10,
+                          opacity: 1,
+                          ...StyleSheet.absoluteFillObject,
+                          
+                        }}
+                        source={{uri: item.img}}
+                      />
+
+                      <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
+                        <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  }
                 />
               </View>
             </View>
@@ -151,10 +186,10 @@ const AMCharDetails = ({ card }) => {
         </View>
       
       {/*         
-        {card.quote != "" ?
+        {waifu.quote != "" ?
           <View style={styles.quoteView}>
             <Text style={styles.quote}>
-              {card.desc}
+              {waifu.desc}
             </Text>
           </View>
           :
@@ -162,14 +197,6 @@ const AMCharDetails = ({ card }) => {
         }
 
       </Swiper> */}
-
-      <FAB
-        //small
-        color="white"
-        style={styles.fab}
-        icon="link-variant"
-        onPress={waifuLinkPress}
-      />
     </View>
   );
 }

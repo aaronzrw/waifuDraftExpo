@@ -16,7 +16,7 @@ import bossDefeatedIcon from '../assets/images/bossDefeated.png'
 
 import MarvelLogo from '../assets/images/MarvelLogo.png'
 import DCLogo from '../assets/images/DCLogo.png'
-import AnimeLogo from '../assets/images/AnimeLogo.png'
+import AnimeLogo from '../assets/images/AMLogo.png'
 
 import shitTierBossIndi from '../assets/images/ShitTierBossIndi.gif'
 import bronzeTierBossIndi from '../assets/images/BronzeTierBossIndi.gif'
@@ -40,9 +40,10 @@ export default class Gauntlet extends Component {
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
 			loading: store.getState().data.loading,
       bosses: store.getState().data.bosses,
-			userInfo: {...store.getState().user.credentials, waifus: _.orderBy(store.getState().user.waifus, ['rank'], ['desc']) },
+			userInfo: {...store.getState().user.creds, waifus: _.orderBy(store.getState().user.waifus, ['rank'], ['desc']) },
       fightActive: false,
       fightCompleted: false,
       fightResult: 0,
@@ -60,6 +61,8 @@ export default class Gauntlet extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation, false)
+    
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -67,8 +70,8 @@ export default class Gauntlet extends Component {
       this.setState({ bosses: newVal.bosses })
     }))
 
-    store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: {...newVal.credentials, waifus: _.orderBy(newVal.waifus, ['rank'], ['desc']) }})
+    this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
+      this.setState({ userInfo: {...newVal.creds, waifus: _.orderBy(newVal.waifus, ['rank'], ['desc']) }})
     }))
 
     this.setState({
@@ -134,7 +137,7 @@ export default class Gauntlet extends Component {
                 var indi = shitTierBossIndi;
                 
                 var bgColor = "#ff0000";
-                switch(boss.tier){
+                switch(boss.rank){
                   case 2:
                     bgColor = "#835220"
                     break;
@@ -227,7 +230,7 @@ export default class Gauntlet extends Component {
                           }}
                         >
                           <View style={{height: '100%', width: '100%'}}>
-                            <Countdown activeTill={boss.leaveTime.toDate()} type={"BOSS"} />
+                            <Countdown close={boss.leaveDate.toDate()} type={"BOSS"} />
 
                             <View style={{position: 'absolute', width: 'auto', top: '22%', right: 15, zIndex:2, flexDirection: "row"}}>
                               <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={maxRank}/>
@@ -265,24 +268,31 @@ export default class Gauntlet extends Component {
                             {/* Points Section */}
                             <View style={{backgroundColor: chroma('black').alpha(.35)}}>
                               <View style={styles.pointsView}>
-                                {boss.reward.points != null ?
+                                {boss.reward.points != 0 ?
                                   <View style={styles.pointsReviewRow}>
                                     <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
                                     <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.points}</Text>
                                   </View>
                                 :<></>}
 
-                                {boss.reward.rankCoins != null ?
+                                {boss.reward.rankCoins != 0 ?
                                   <View style={styles.pointsReviewRow}>
                                     <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
                                     <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.rankCoins}</Text>
                                   </View>
                                 :<></>}
 
-                                {boss.reward.statCoins != null ?
+                                {boss.reward.statCoins != 0 ?
                                   <View style={styles.pointsReviewRow}>
                                     <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
                                     <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.statCoins}</Text>
+                                  </View>
+                                :<></>}
+                                
+                                {boss.reward.bossCoins != 0 ?
+                                  <View style={styles.pointsReviewRow}>
+                                    <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={statCoinIcon} />
+                                    <Text style={[ styles.statsText, {color: chroma("white")}]}>{boss.reward.bossCoins}</Text>
                                   </View>
                                 :<></>}
                               </View>

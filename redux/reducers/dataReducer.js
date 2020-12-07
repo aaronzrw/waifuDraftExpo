@@ -1,5 +1,8 @@
 
 import firebase from 'firebase/app'
+import * as dateFns from "date-fns"
+import * as dateFnsTz from "date-fns-timezone"
+
 import {
   SET_WEEKLY_POLL,
   SET_DAILY_POLL,
@@ -12,7 +15,7 @@ import {
   SET_WAIFU_LIST,
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
-  SET_GAUNTLET,
+  SET_BOSSES,
   SET_BOSS_ITEMS
 } from '../types';
   
@@ -43,7 +46,9 @@ import {
           loading: false
         };
       case SET_WEEKLY_POLL:
-        action.payload.activeTill = action.payload.activeTill.toDate();
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
+        
         var poll = state.poll;
         poll.weekly = action.payload;
 
@@ -52,7 +57,9 @@ import {
           poll
         }
       case SET_DAILY_POLL:
-        action.payload.activeTill = action.payload.activeTill.toDate();
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
+
         var poll = state.poll;
         poll.daily = action.payload;
 
@@ -61,20 +68,15 @@ import {
           poll
         }
       case SET_POLL_WAIFUS:
-        /*action.payload.forEach(item => {
-          item.showVote = false;
-        }); */
-
         return {
           ...state,
           weeklyPollWaifus: action.payload.weekly,
           dailyPollWaifus:action.payload.daily,
         };
       case SET_SEARCH_DATA:
-        state.searchItems = action.payload;
-                
         return {
           ...state,
+          searchItems: action.payload,
           loading: false
         };
         break;
@@ -88,7 +90,7 @@ import {
           ...state,
           waifuList: action.payload
         }
-      case SET_GAUNTLET:
+      case SET_BOSSES:
         return{
           ...state,
           bosses: action.payload
@@ -100,16 +102,18 @@ import {
         }
       case SUB_SNAPSHOTS:
         if (state.unSubUser != null){
-          state.unSubUser()
+          state.unSubUserCred()
+          state.unSubUserDraft()
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
           state.unSubTrades()
-          state.unSubGauntlet()
+          state.unSubBosses()
           state.unSubChats()
           state.unSubBossItems()
+          state.unSubDraft()
         }
 
         return{
@@ -118,16 +122,18 @@ import {
         }
       case UNSUB_SNAPSHOTS:
         if (state.unSubUser != null){
-          state.unSubUser()
+          state.unSubUserCred()
+          state.unSubUserDraft()
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
           state.unSubTrades()
-          state.unSubGauntlet()
+          state.unSubBosses()
           state.unSubChats()
           state.unSubBossItems()
+          state.unSubDraft()
         }
 
         return{

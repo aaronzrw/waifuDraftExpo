@@ -8,6 +8,7 @@ import watch from "redux-watch";
 import _ from "lodash";
 
 import Swiper from 'react-native-swiper'
+import SwipeIndicator from '../components/SwipeIndicator'
 
 // Redux stuff
 import store from "../redux/store";
@@ -15,7 +16,7 @@ import {
   LOADING_UI,
   STOP_LOADING_UI,
   SET_SEARCH_DATA,
-  SET_USER
+  SET_USER_CREDENTIALS
 } from '../redux/types';
 
 const { width, height } = Dimensions.get('window');
@@ -27,6 +28,7 @@ export default class SearchSeries extends Component {
 
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       origSearchItems: props.route.params.series,
       searchItems: _.cloneDeep(props.route.params.series),
       chars: props.route.params.chars,
@@ -37,6 +39,38 @@ export default class SearchSeries extends Component {
     this.searchTextChange = this.searchTextChange.bind(this);
     this.loadCharacters = this.loadCharacters.bind(this);
     this.selectSeries = this.selectSeries.bind(this);
+    this.setSubscribes = this.setSubscribes.bind(this)
+    this.unSetSubscribes = this.unSetSubscribes.bind(this)
+  }
+
+  componentDidMount(){
+    this._navFocusUnsubscribe = this.state.navigation.addListener('focus', () => this.setSubscribes());
+    this._navBlurUnsubscribe = this.state.navigation.addListener('blur', () => this.unSetSubscribes());
+  }
+  
+  componentWillUnmount(){
+    this._navFocusUnsubscribe();
+    this._navBlurUnsubscribe();
+  }
+  setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+    
+    //check if we came to this screen from a different screen
+    var navState = this.state.navigation.dangerouslyGetState().routes.filter(x => x.name == "SearchSeries")[0].params;
+    // console.log(navState)
+
+    if(navState.autoLoad){
+      navState.autoLoad = false;
+      this.state.navigation.navigate("SearchCharacters", {...navState, autoLoad: true})
+    }
+  }
+
+  unSetSubscribes(){
+    // if(this.dataUnsubscribe != null)
+    //   this.dataUnsubscribe()
+    
+    // if(this.userUnsubscribe != null)
+    //   this.userUnsubscribe()
   }
 
   searchTextChange(text){
@@ -72,6 +106,7 @@ export default class SearchSeries extends Component {
   render() {
     return (
       <>
+        <SwipeIndicator horiSwipe={true} />
         <Swiper
           index={0}
           showsPagination={false}
@@ -79,7 +114,7 @@ export default class SearchSeries extends Component {
           bounces
         >
           <View style={[styles.slideContainer,{backgroundColor: chroma('white').alpha(.85).hex()}]}>
-            <View style={{height: 50, width: width, backgroundColor: chroma('black').alpha(.15)}}>
+            <View style={{height: 50, width: width, backgroundColor: chroma('black').alpha(.15), justifyContent: "center", alignContent: "center"}}>
               <Text style={styles.text}>ANIMES</Text>
             </View>
             <View style={styles.slide}>
@@ -115,7 +150,7 @@ export default class SearchSeries extends Component {
           </View>
 
           <View style={[styles.slideContainer,{backgroundColor: chroma('black').alpha(.15)}]}>
-            <View style={{height: 50, width: width, backgroundColor: chroma('white').alpha(.15)}}>
+            <View style={{height: 50, width: width, backgroundColor: chroma('white').alpha(.15), justifyContent: "center", alignContent: "center"}}>
               <Text style={styles.text}>MANGAS</Text>
             </View>
             <View style={styles.slide}>
@@ -182,8 +217,12 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "white",
-    fontSize: 30,
-    textAlign: "center"
+    fontFamily: "Edo",
+    fontSize: 40,
+    textAlign: "center",
+    textShadowColor: chroma('teal').brighten().hex(),
+    textShadowOffset: {width: -1, height: 1},
+    textShadowRadius: 10,
   },
   image: {
     flex: 1,

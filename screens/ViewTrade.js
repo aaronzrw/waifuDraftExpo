@@ -41,15 +41,16 @@ export default class ViewTrade extends Component {
     super();
     this.mounted = true;
 
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       trade: props.route.params.trade,
 			loading: store.getState().data.loading,
       waifuList: store.getState().data.waifuList,
       fromUser: users.filter(x => x.userId == props.route.params.trade.from.husbandoId)[0],
       toUser: users.filter(x => x.userId == props.route.params.trade.to.husbandoId)[0],
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus},
       size: {width,height},
     };
 
@@ -59,6 +60,8 @@ export default class ViewTrade extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -76,21 +79,21 @@ export default class ViewTrade extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      var users = [{...newVal.credentials, waifus: newVal.waifus }].concat(newVal.otherUsers)
+      var users = [{...newVal.creds, waifus: newVal.waifus }].concat(newVal.otherUsers)
       var fromUser = users.filter(x => x.userId == this.state.trade.from.husbandoId)[0];
       var toUser = users.filter(x => x.userId == this.state.trade.to.husbandoId)[0];
 
-      this.setState({fromUser, toUser, userInfo: {...newVal.credentials, waifus: newVal.waifus} })
+      this.setState({fromUser, toUser, userInfo: {...newVal.creds, waifus: newVal.waifus} })
     }))
     
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
     var trade = store.getState().data.trades.filter(x => x.id == this.state.trade.id);
     if(!_.isEmpty(trade)){
       this.setState({
         trade: trade[0],
         fromUser: users.filter(x => x.userId == this.state.trade.from.husbandoId)[0],
         toUser: users.filter(x => x.userId == this.state.trade.to.husbandoId)[0],
-        userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus}
+        userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus}
       })
     }
     else{

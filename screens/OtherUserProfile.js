@@ -11,7 +11,7 @@ import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
 import favoriteHeart from '../assets/images/FavoriteHeart.png'
 
-import animeIcon from '../assets/images/AnimeLogo.png'
+import animeIcon from '../assets/images/AMLogo.png'
 import marvelIcon from '../assets/images/MarvelLogo.png'
 import dcIcon from '../assets/images/DCLogo.png'
 
@@ -54,11 +54,12 @@ export default class OtherUserProfile extends Component {
       
     this.state = {
       navigation: props.navigation,
+      goBackFunc: props.route.params.goBackFunc,
       otherUser: props.route.params.otherUser,
       waifuList: waifuList,
 			loading: store.getState().data.loading,
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
-      users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
+      userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus},
+      users: [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
       trades: trades,
       waifuType: "All",
       size: {width,height}
@@ -76,6 +77,8 @@ export default class OtherUserProfile extends Component {
   }
   
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -88,17 +91,17 @@ export default class OtherUserProfile extends Component {
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       var otherUser = newVal.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0];
-      var users = [{...newVal.credentials, waifus: newVal.waifus }].concat(newVal.otherUsers);
+      var users = [{...newVal.creds, waifus: newVal.waifus }].concat(newVal.otherUsers);
 
-      this.setState({otherUser, userInfo: {...newVal.credentials, waifus: newVal.waifus}, users })
+      this.setState({otherUser, userInfo: {...newVal.creds, waifus: newVal.waifus}, users })
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
     trades = trades.filter(x => x.from.husbandoId == this.state.otherUser.userId || x.to.husbandoId == this.state.otherUser.userId)
-    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+    var users = [{...store.getState().user.creds, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
 
     this.setState({
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      userInfo: {...store.getState().user.creds, waifus: store.getState().user.waifus},
       otherUser: store.getState().user.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0],
       trades,
       users,

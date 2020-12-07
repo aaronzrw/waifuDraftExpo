@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-    SET_USER,
+    SET_USER_CREDENTIALS,
     SET_SNACKBAR,
     CLEAR_ERRORS,
     LOADING_UI,
@@ -18,6 +18,7 @@ import {
   import 'firebase/auth'
   import { setRealTimeListeners } from './dataActions'
   import store from '../store';
+  import ls from 'lz-string';
 
   export const loginUser = (user) => {
     const { valid, errors } = validateLoginData(user);
@@ -97,13 +98,8 @@ import {
         img: `https://firebasestorage.googleapis.com/v0/b/waifudraftunlimited.appspot.com/o/no-img.png?alt=media`,
         createdDate: new Date().toISOString(),
         isAdmin: false,
-        isWinner: false,
-        points: 10,
-        statCoins: 0,
-        rankCoins: 0,
-        submitSlots: 0,
         isActive: false,
-        pin: newUserData.pin
+        pin: ls.compressToUTF16(newUserData.pin)
       };
 
       return firebase.firestore().doc(`/users/${userId}`).set(userCreds);

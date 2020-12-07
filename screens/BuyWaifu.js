@@ -22,7 +22,8 @@ export default class BuyWaifu extends Component {
     super();
     this.state ={
       navigation: props.navigation,
-      userInfo: store.getState().user.credentials,
+      goBackFunc: props.route.params.goBackFunc,
+      userInfo: store.getState().user.creds,
       waifu: props.route.params.waifu,
       showBuyConf: false,
     };
@@ -33,6 +34,8 @@ export default class BuyWaifu extends Component {
   }
 
   setSubscribes(){
+    this.state.goBackFunc(this.state.navigation)
+
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -42,11 +45,11 @@ export default class BuyWaifu extends Component {
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: newVal.credentials })
+      this.setState({ userInfo: newVal.creds })
     }))
     
     this.setState({
-      userInfo: store.getState().user.credentials,
+      userInfo: store.getState().user.creds,
       waifu: store.getState().data.waifuList.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     })
   }
@@ -131,7 +134,7 @@ export default class BuyWaifu extends Component {
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails waifu={waifu}/> : <ComicCharDetails waifu={waifu} />}
                 </View>
               </Swiper>
             </View>
