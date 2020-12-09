@@ -253,7 +253,11 @@ export default class VoteDetails extends Component {
   
   render(){
     var currVote = 0;
-    var minPoints = 1;
+    var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)
+      if(!_.isEmpty(voteObj))
+        currVote = voteObj[0].vote;
+
+    var minPoints = 0;
     var validVote = true;
 
     var rank = 1;
@@ -261,10 +265,7 @@ export default class VoteDetails extends Component {
 
     switch(this.state.waifu.husbandoId){
       case "Weekly":
-        minPoints = this.state.topVote.vote != 0 ? this.state.topVote.vote : 1
-        var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)
-        if(!_.isEmpty(voteObj))
-          currVote = voteObj[0].vote;
+        minPoints = this.state.topVote.vote != 0 ? this.state.topVote.vote : 0
   
         if(currVote < minPoints)
           minPoints = minPoints - currVote + 1
@@ -288,7 +289,12 @@ export default class VoteDetails extends Component {
         }
         break;
       case "Daily":
-        minPoints = 1
+        minPoints = 5
+
+        //if user has already voted the minimum then let them vote whatever amount they want
+        if(currVote >= minPoints)
+          minPoints = 1
+
         if (currVote < 25){
           rank = 1
           nextRankMinBid = 50 - currVote;
@@ -306,7 +312,7 @@ export default class VoteDetails extends Component {
       <View style={[styles.container]}>
         <ImageBackground blurRadius={.45} style={[styles.imageContainer]} source={{uri: this.state.waifu.img}}>
           <View style={styles.bgView}>
-            <SwipeIndicator horiSwipe={true} />
+            <SwipeIndicator horiSwipe={true} tintColor={"black"}/>
             <Swiper
               index={0}
               showsPagination={false}
@@ -353,6 +359,7 @@ export default class VoteDetails extends Component {
                               <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
                                 <Button
                                   mode="contained"
+                                  labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                                   color={chroma(getRankColor(this.state.waifu.rank + 1)).hex()}
                                   style={{ fontFamily:"Edo", flex: .75, width: width/1.5 }}
                                   onPress={() => this.setState({ showConf: true, nextRankMinBid: nextRankMinBid})}
@@ -399,6 +406,7 @@ export default class VoteDetails extends Component {
                               disabled={!validVote}
                               mode="contained"
                               color={chroma('aqua').hex()}
+                              labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                               style={{ fontFamily:"Edo", flex: .75, width: width/2 }}
                               onPress={() => this.submitVote(userVote, this.state.waifu)}
                             >

@@ -215,7 +215,7 @@ class Layout extends Component {
 
 	UNSAFE_componentWillReceiveProps(props){
 		if(!_.isEqual(props.authUser, this.state.authUser))
-			this.startListeners(props)
+			this.setState({authUser: props.authUser}, () => this.startListeners(props))
 	}
 
   	registerForPushNotificationsAsync = async (userId) => {

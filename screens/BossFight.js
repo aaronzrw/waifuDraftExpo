@@ -6,6 +6,12 @@ import { FlatGrid } from 'react-native-super-grid';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaskedView from '@react-native-community/masked-view';
 import _ from 'lodash'
+import * as firebase from 'firebase';
+import 'firebase/auth';
+
+import * as dateFns from "date-fns"
+import * as dateFnsTz from "date-fns-timezone"
+
 import Swiper from 'react-native-swiper'
 
 //Media
@@ -147,7 +153,7 @@ export default class BossFight extends Component {
             })
             break;
           case "originType":
-            if(req[type].map(t => t.toLowerCase()).includes(waifu.type.toLowerCase()))
+            if(_.isEmpty(req[type]) || req[type].map(t => t.toLowerCase()).includes(waifu.type.toLowerCase()))
               canFight = true;
             else{
               messages = { type: "Warning", message: "Boss Will Only Fight " + req[type].join() + " Characters"}
@@ -176,17 +182,17 @@ export default class BossFight extends Component {
       }
     }
 
-    if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
-      userFights = userFights.flatMap(x => x.waifusUsed)
-      var hasFought = userFights.includes(waifu.waifuId)
-      if(hasFought){
-        store.dispatch({
-          type: SET_SNACKBAR,
-          payload: { type: "Warning", message: "Waifu Has Already Fought A Boss." }
-        });
-        return
-      }
-    }
+    // if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
+    //   userFights = userFights.flatMap(x => x.waifusUsed)
+    //   var hasFought = userFights.includes(waifu.waifuId)
+    //   if(hasFought){
+    //     store.dispatch({
+    //       type: SET_SNACKBAR,
+    //       payload: { type: "Warning", message: "Waifu Has Already Fought A Boss." }
+    //     });
+    //     return
+    //   }
+    // }
       
     var reqCheck = this.checkBossReq(waifu)
     if(reqCheck.messages != null){
@@ -263,18 +269,27 @@ export default class BossFight extends Component {
     var waifus = _.cloneDeep(this.state.waifuList)
     .filter(x => this.state.waifus.includes(x.waifuId))
     .map(waifu => {
-      var isResting = false
+      var draft = store.getState().draft;
+      var tz = draft.timeZone;
+      var nowDt = dateFnsTz.convertToTimeZone(firebase.firestore.Timestamp.now().toDate(), {timeZone: tz})
+
+      var isResting = false;
+      if(waifu.bossFights != null)
+        isResting = dateFns.isAfter(waifu.bossFights.restingTill, nowDt) || false
+
       var canFight = false;
-      
-      var userFights = this.state.bosses.flatMap(x => x.fights).filter(x => x.husbandoId == this.state.userInfo.userId)
-      if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
-        userFights = userFights.flatMap(x => x.waifusUsed)
-        isResting = userFights.includes(waifu.waifuId)
-      }
 
       if(!isResting){
-        var valid = this.checkBossReq(waifu);
-        canFight = valid.canFight
+        // var userFights = this.state.boss.fights.filter(x => x.husbandoId == this.state.userInfo.userId)
+        // if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
+        //   userFights = userFights.flatMap(x => x.waifusUsed)
+        //   canFight = !userFights.includes(waifu.waifuId)
+        // }
+        
+        // if(canFight){
+          var valid = this.checkBossReq(waifu);
+          canFight = valid.canFight
+        // }
       }
 
       waifu.isResting = isResting
@@ -297,9 +312,8 @@ export default class BossFight extends Component {
       waifus = waifus.concat(waifuGroups.flatMap(y => y.waifus))
     })
 
-
     var bgColor = "#ff0000";
-    switch(this.state.boss.tier){
+    switch(this.state.boss.rank){
       case 2:
         bgColor = "#835220"
         break;

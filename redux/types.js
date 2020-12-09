@@ -1,6 +1,7 @@
 // Game reducer type
 export const SET_GAME_DATA = 'SET_GAME_DATA'
 export const SET_FIND_GAME = 'SET_FIND_GAME'
+export const CLEAR_GAME_DATA = 'CLEAR_GAME_DATA'
 
 // User reducer types
 export const SET_AUTHENTICATED = 'SET_AUTHENTICATED';

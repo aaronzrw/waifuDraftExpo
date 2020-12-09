@@ -181,7 +181,7 @@ export async function submitVote(voteCount, waifu){
     img: store.getState().user.creds.img
   };
 
-  await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
+  await firebase.firestore().doc(`${draftPath}/waifus/${waifu.waifuId}`).get()
   .then(doc => {
     var votes = doc.data().votes;
     var newVoteObj = votes.filter(x => x.husbandoId == voteObj.husbandoId);
@@ -393,10 +393,27 @@ export async function updateTrade(trade, status){
 export async function fightBoss(bossFightObj){
   store.dispatch({ type: LOADING_UI })
   
+  var draft = store.getState().draft;
+  var tz = draft.timeZone;
+  var nowDt = dateFnsTz.convertToTimeZone(firebase.firestore.Timestamp.now().toDate(), {timeZone: tz})
+
   var uid = await firebase.auth().currentUser.uid;
+  var userFights = store.getState().user.creds.bossFights || 
+    {
+      wins: [],
+      losses: []
+    };
+  
   var waifuRef = (await firebase.firestore().doc(`${draftPath}/waifus/${bossFightObj.waifuId}`).get())
   var waifu = waifuRef.data()
-
+  var bossFights = waifu.bossFights || 
+    {
+      restingTill: dateFns.addDays(nowDt, waifu.rank),
+      wins: [], 
+      losses: []
+    };
+  bossFights.restingTill = dateFns.addDays(nowDt, waifu.rank);
+  
   var bossRef = (await firebase.firestore().doc(`${draftPath}/bosses/${bossFightObj.bossId}`).get())
   var boss = bossRef.data()
 
@@ -432,6 +449,20 @@ export async function fightBoss(bossFightObj){
     rewardResult = await buildBossRewardStr(boss.reward);
     userFightRec.waifusUsed.push(bossFightObj.waifuId)
     userFightRec.defeated = true;
+
+    bossFights.wins.push({
+      bossName: boss.name,
+      bassRank: boss.rank,
+      rewards: boss.rewards,
+      date: firebase.firestore.Timestamp.now()
+    })
+
+    userFights.wins.push({
+      bossName: boss.name,
+      bassRank: boss.rank,
+      rewards: boss.rewards,
+      date: firebase.firestore.Timestamp.now()
+    })
   }
   else{
     if((boss.hp - totalDmg) >= waifu.defense)
@@ -447,8 +478,22 @@ export async function fightBoss(bossFightObj){
       rewardResult = "Boss Not Defated. No Reward";
       userFightRec.waifusUsed.push(bossFightObj.waifuId)
     }
+    
+    bossFights.losses.push({
+      bossName: boss.name,
+      bassRank: boss.rank,
+      rewards: boss.rewards,
+      date: firebase.firestore.Timestamp.now()
+    })
+    userFights.losses.push({
+      bossName: boss.name,
+      bassRank: boss.rank,
+      date: firebase.firestore.Timestamp.now()
+    })
   }
 
+  await firebase.firestore().doc(`${draftPath}/users/${uid}`).update({ userFights })
+  await waifuRef.ref.update(bossFights)
   await bossRef.ref.update({fights})
 
   store.dispatch({ type: STOP_LOADING_UI })
@@ -457,6 +502,18 @@ export async function fightBoss(bossFightObj){
 
 export const clearErrors = () => (dispatch) => {
   dispatch({ type: CLEAR_ERRORS });
+}
+
+export async function switchDraft(draftId){
+  console.log(draftId)
+  var userId = store.getState().user.creds.userId
+
+  store.dispatch({type: LOADING_UI})
+
+  await firebase.firestore().doc(`users/${userId}`).update({currentDraftId: draftId})
+  await setRealTimeListeners(userId)
+
+  store.dispatch({type: STOP_LOADING_UI})
 }
 
 export async function setRealTimeListeners(userId){
@@ -534,7 +591,7 @@ export async function setRealTimeListeners(userId){
           });
           return;
         }
-          
+
         store.dispatch({
           type: SET_USER_CREDENTIALS,
           payload: {...doc.data()}
@@ -640,7 +697,12 @@ export async function setRealTimeListeners(userId){
   
         store.dispatch({
           type: SET_USER_CREDENTIALS,
-          payload: {creds: userInfo, waifus: userWaifus}
+          payload: {creds: userInfo}
+        });
+        
+        store.dispatch({
+          type: SET_USER_WAIFUS,
+          payload: userWaifus
         });
       });
       resolve({name: "unSubWaifus", func: unSubWaifus})
@@ -721,56 +783,6 @@ export async function setRealTimeListeners(userId){
       reject()
     }
   });
-  // const weeklyPollPromise = new Promise((resolve, reject) => {
-  //   try{
-  //     var unSubWeeklyPoll = firebase.firestore().doc(`${draftPath}/poll/weekly`).onSnapshot(function(doc) {
-  //       try{
-  //         var pollObj = {...doc.data(), type: "weekly"};
-  //         store.dispatch({
-  //           type: SET_WEEKLY_POLL,
-  //           payload: pollObj
-  //         });
-  //       }
-  //       catch(err){
-  //         console.log(err);
-  //         store.dispatch({
-  //           type: SET_WEEKLY_POLL,
-  //           payload: null
-  //         });
-  //       }
-  //     });
-  //     resolve({name: "unSubWeeklyPoll", func: unSubWeeklyPoll})
-  //   }
-  //   catch(ex){
-  //     console.log(ex)
-  //     reject()
-  //   }
-  // });
-  // const dailyPollPromise = new Promise((resolve, reject) => {
-  //   try{
-  //     var unSubDailyPoll = firebase.firestore().doc(`${draftPath}/poll/daily`).onSnapshot(function(doc) {
-  //       try{
-  //         var pollObj = {...doc.data(), type: "daily"};
-  //         store.dispatch({
-  //           type: SET_DAILY_POLL,
-  //           payload: pollObj
-  //         });
-  //       }
-  //       catch(err){
-  //         console.log(err);
-  //         store.dispatch({
-  //           type: SET_DAILY_POLL,
-  //           payload: null
-  //         });
-  //       }
-  //     });
-  //     resolve({name: "unSubDailyPoll", func: unSubDailyPoll})
-  //   }
-  //   catch(ex){
-  //     console.log(ex)
-  //     reject()
-  //   }
-  // });
   const bossPromise = new Promise((resolve, reject) => {
     try{
       var unSubBosses = firebase.firestore().collection(`${draftPath}/bosses`).onSnapshot(function(querySnapshot) {
@@ -877,7 +889,6 @@ export async function setRealTimeListeners(userId){
       reject()
     }
   });
-
   const draftPromise = new Promise((resolve, reject) => {
     try{
       var unSubDraft = firebase.firestore().doc(`${draftPath}`).onSnapshot(function(doc) {

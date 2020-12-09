@@ -1,7 +1,13 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
-import { Input, Slider, BottomSheet } from 'react-native-elements';
+import { Input, Slider, BottomSheet as BS2 } from 'react-native-elements';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
+import { Modalize } from 'react-native-modalize';
+
+import Animated from 'react-native-reanimated'
+const AnimatedView = Animated.View
+
+import BottomSheet from 'reanimated-bottom-sheet';
 
 import { FlatGrid } from 'react-native-super-grid';
 
@@ -11,13 +17,14 @@ import Swiper from 'react-native-swiper'
 
 import UserProfileImg from '../components/UserProfileImg'
 import SwipeIndicator from '../components/SwipeIndicator'
+import UserSettingsBottomSheet from '../components/UserSettingsBottomSheet'
 
 //Firebase
 import firebase, { firestore } from 'firebase/app'
 import 'firebase/auth'
 
 //Media
-import { Icon } from 'react-native-elements'
+import Icon from 'react-native-vector-icons/FontAwesome';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import defIcon from '../assets/images/defIcon.png'
@@ -31,11 +38,12 @@ import backIcon from '../assets/images/BackIcon.png'
 import animeIcon from '../assets/images/AMLogo.png'
 import marvelIcon from '../assets/images/MarvelLogo.png'
 import dcIcon from '../assets/images/DCLogo.png'
+import bossFightGif from '../assets/images/Boss-Fight.gif'
 
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch';
-import { getSearchData } from '../redux/actions/dataActions';
+import { getSearchData, switchDraft } from '../redux/actions/dataActions';
 
 import {
   LOADING_UI,
@@ -43,7 +51,6 @@ import {
 	SET_USER_CREDENTIALS,
 	SET_SNACKBAR
 } from '../redux/types';
-
 
 import { logoutUser } from '../redux/actions/userActions'
 
@@ -54,6 +61,9 @@ import { user } from 'firebase-functions/lib/providers/auth';
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
+const modalizeRef = React.createRef(null);
+const ssRef = React.createRef();
+const bs = React.createRef();
 
 export default class Profile extends Component {
   constructor(props) {
@@ -64,6 +74,9 @@ export default class Profile extends Component {
     var trades = _.cloneDeep(store.getState().data.trades);
     trades = trades.filter(x => x.from.husbandoId == store.getState().user.creds.userId ||
       x.to.husbandoId == store.getState().user.creds.userId)
+
+    this.fall = new Animated.Value(1);
+    this.animated = React.createRef(new Animated.Value(0)).current;
 
     this.state = {
       navigation: props.navigation,
@@ -90,7 +103,9 @@ export default class Profile extends Component {
       dailyBonusRedeemed: true,
       showSwitchDraft: false,
       size: {width,height},
-      otherDrafts: []
+      settingsIndex: 0,
+      otherDrafts: [],
+      handle: false,
     };
 
     this.selectWaifu = this.selectWaifu.bind(this)
@@ -106,12 +121,11 @@ export default class Profile extends Component {
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
     this.checkDailyBonus = this.checkDailyBonus.bind(this)
     
-    this.addNewDaily = this.addNewDaily.bind(this)
-    this.addFavoritieSeries = this.addFavoritieSeries.bind(this)
     this.changeFabState = this.changeFabState.bind(this)
     this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
+  //#region functions
   async setSubscribes(){
     this.state.goBackFunc(this.state.navigation, false)
 
@@ -132,14 +146,32 @@ export default class Profile extends Component {
 			this.setState({ userInfo, selectedWaifu, trades, waifuList: newVal.waifuList })
     }))
 
-    this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
+    this.userUnsubscribe = store.subscribe(userReducerWatch(async (newVal, oldVal, objectPath) => {
       var selectedWaifu = null;
       var users = [{...newVal.creds, waifus: newVal.waifus }].concat(newVal.otherUsers);
       if(this.state.selectedWaifu != null){
         selectedWaifu = newVal.waifus.filter(x => x.waifuId == this.state.selectedWaifu.waifuId)[0]
       }
 
-      this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
+      var drafts = []    
+      var currentDraftId = newVal.creds.currentDraftId;
+      await firebase.firestore().collectionGroup('users').where("id", '==', this.state.userInfo.userId).get()
+      .then(async function (querySnapshot) {
+        var draftIds = querySnapshot.docs.map(doc => doc.ref.parent.parent.id)
+  
+        drafts = (await firebase.firestore().collection(`drafts`)
+        .where(firestore.FieldPath.documentId(), "in", draftIds)
+        .get()).docs.filter(x => x.id != currentDraftId).map(x => {
+          return {
+            id: x.id,
+            name: x.data().settings.name,
+            img: x.data().settings.img,
+            code: x.data().settings.code,
+            pass: x.data().settings.pass
+          }
+        })      
+      });
+      this.setState({userInfo: newVal.creds, waifus: newVal.waifus, otherDrafts: drafts, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
@@ -156,6 +188,7 @@ export default class Profile extends Component {
       .where(firestore.FieldPath.documentId(), "in", draftIds)
       .get()).docs.filter(x => x.id != currentDraftId).map(x => {
         return {
+          id: x.id,
           name: x.data().settings.name,
           img: x.data().settings.img,
           code: x.data().settings.code,
@@ -301,80 +334,6 @@ export default class Profile extends Component {
     this.setState({ reAuthSuc: result });
   }
 
-  async addNewDaily(){
-    var searchItems = getSearchData();
-
-    var waifuLinks = await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
-    .then((docs) => {
-      var links = []
-      docs.forEach(x => {
-        links.push(x.data().link)
-      })
-
-      return links
-    });
-
-    const characters = searchItems.characters;
-    characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
-    characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
-    characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
-
-    var newWaifu = null;
-    while (newWaifu == null) {
-      var newWaifu = this.getRandWaifu(characters);
-      if (newWaifu.publisher != null)
-        newWaifu.type = newWaifu.publisher;
-      else
-        newWaifu.type = "Anime-Manga";
-
-      newWaifu.rank = 1;
-      newWaifu.attack = 3;
-      newWaifu.defense = 1;
-      newWaifu.husbandoId = "Daily";
-      newWaifu.submittedBy = "System";
-      newWaifu.votes = [];
-    }
-
-    await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).add(newWaifu)
-    .then(doc => {
-      newWaifu.waifuId = doc.id
-      return firebase.firestore().collection(`${this.state.draftSettings.path}/waifuPoll`).add(newWaifu);
-    });
-  }
-
-  getRandWaifu(characters) {
-    return _.shuffle(characters)[Math.floor(Math.random() * characters.length)];
-  }
-
-  async addFavoritieSeries(){
-    var draft = store.getState().draft;
-    (await firebase.firestore().collection(`users`).get()).docs.forEach(user => {
-      user.ref.update({currentDraftId: "6FDG"})
-    })
-  }
-  
-  recreateWeeklyPoll(){
-    console.log("remake")
-  }
-
-  createWaifuBackUp(){
-    firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
-    .then(async (docs) => {
-      var waifus = [];
-      docs.forEach(x => {
-        waifus.push({docId: x.id, ...x.data()})
-      });
-            
-      waifus.forEach(async x => {
-        var id = x.docId;
-        var waifu = _.cloneDeep(x);
-        delete waifu.docId;
-
-        await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
-      })
-    })
-  }
-
   openUserFavoritesScreen(){
     var userId = this.state.userInfo.userId
     this.state.navigation.navigate("UserWaifuFavorites", {userId})
@@ -399,7 +358,7 @@ export default class Profile extends Component {
 
         var streak = this.state.userInfo.streak || 0;
 
-        return doc.ref.update({points: points + draft.deafultPoints, dailyBonusRedeemed: true, streak: streak + 1})
+        return doc.ref.update({points: points + draft.defaultPoints, dailyBonusRedeemed: true, streak: streak + 1})
       })
       
       setTimeout(function(){
@@ -422,7 +381,10 @@ export default class Profile extends Component {
     this.setState({fabOpen: !fabState})
   }
 
+  //#endregion
+
   render(){
+    //#region default values
     var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
 
     switch(this.state.waifuType){
@@ -452,46 +414,12 @@ export default class Profile extends Component {
     var completedTrades = _.cloneDeep(trades.filter(x => x.status != "Active"))
 
     trades = activeTrades.concat(completedTrades);
-
-    var userActions =
-      [
-        { icon: 'heart-box',
-          label: 'Logout',
-          onPress: () => logoutUser()
-        },
-        { 
-          icon: 'plus-box-outline',
-          label: 'Search For Draft',
-          onPress: () => this.state.navigation.navigate("FindDraft")
-        },
-        // { 
-        //   icon: 'plus-box-outline',
-        //   label: 'Switch Draft',
-        //   onPress: () => this.setState({ showSwitchDraft: true })
-        // }
-      ]
-
-    if(this.state.userInfo.isAdmin){
-      userActions = userActions.concat([
-        { icon: 'heart-box',
-          label: 'Add New Daily',
-          onPress: () => this.addNewDaily()
-        },
-        { icon: 'heart-box',
-          label: 'Add Favorite Series',
-          onPress: () => this.addFavoritieSeries()
-        },
-        { icon: 'heart-box',
-          label: 'Create Waifu Backup',
-          onPress: () => this.createWaifuBackUp()
-        }
-      ])
-    }
+    //#endregion
 
     return (
       <>
         {this.state.loading ?
-          <></>
+          <></> 
         :
           <>
             <SwipeIndicator horiSwipe={true} tintColor={"black"}/>
@@ -499,22 +427,24 @@ export default class Profile extends Component {
               index={0}
               showsPagination={false}
             >
-              <View style={[styles.container]}>
+              <View style={[styles.container, {backgroundColor: "white", justifyContent:"flex-start"}]}>
+                <UserSettingsBottomSheet drafts={this.state.otherDrafts}/>
+
                 <UserProfileImg user={this.state.userInfo} img={this.state.userInfo.img}/>
 
                 <View style={[styles.userInfoView]}>
                   <View style={[styles.userInfo]}>
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showUpdateUserName: true })}  style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showUpdateUserName: true })}  style={{height: 'auto', flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
                       <Text style={[styles.text]}>{this.state.userInfo.userName}</Text>
                       <MaterialIcons name="edit" size={24} color="black" />
                     </TouchableOpacity>
                     
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showEmailUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showEmailUpdate: true })} style={{height: 'auto', flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
                       <Text style={[styles.text, {fontSize: 20}]}>{this.state.userInfo.email}</Text>
                       <MaterialIcons name="edit" size={24} color="black"/>
                     </TouchableOpacity>
                     
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showPasswordUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showPasswordUpdate: true })} style={{height: 'auto', flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
                       <Text style={[styles.text]}>Password</Text>
                       <MaterialIcons name="edit" size={24} color="black"/>
                     </TouchableOpacity>
@@ -530,7 +460,7 @@ export default class Profile extends Component {
 
                 {!this.state.dailyBonusRedeemed && !this.state.chestOpen ?
                   <View style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
-                    <TouchableOpacity activeOpacity={.5} onPress={() => this.setState({dailyBonusRedeemed: true}, this.checkDailyBonus())}
+                    <TouchableOpacity activeOpacity={.5} onPress={() => this.checkDailyBonus()}
                       style={{height: 'auto', width: 'auto', alignItems:"center", justifyContent:"center"}}>
                       <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 125, width:125}} />
                     </TouchableOpacity>
@@ -546,14 +476,6 @@ export default class Profile extends Component {
                     </View>
                   :<></>
                 }
-                
-                <FAB.Group
-                  fabStyle={{backgroundColor: chroma('aqua').hex()}}
-                  open={this.state.settingsFabOpen}
-                  icon={'settings'}
-                  actions={userActions}
-                  onStateChange={() => this.changeSettingsFabState()}
-                />
               </View>
 
               <View style={styles.waifuListView}>
@@ -699,26 +621,6 @@ export default class Profile extends Component {
             </Swiper>
           </>
         }
-
-        {/* <BottomSheet isVisible={this.state.showSwitchDraft} modalProps={tra}>
-          <FlatGrid
-            itemDimension={50}
-            items={this.state.otherDrafts}
-            style={styles.gridView}
-            // staticDimension={300}
-            // fixed
-            spacing={20}
-            renderItem={({item, index}) => {
-              console.log(item)
-              return(
-                <TouchableOpacity activeOpacity={.25}
-                  style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
-                >
-                </TouchableOpacity>
-              )
-            }}
-          />
-        </BottomSheet> */}
 
         {/* Update User Info Modal */}
         <Modal
@@ -890,25 +792,25 @@ const styles = StyleSheet.create({
     width: width * .9
 	},
   userInfoView:{
-    flex: 1,
+    height: 'auto',
     width: width,
     shadowColor: '#000',
   },
   userInfo: {
-    height: 125,
+    height: 'auto',
     width: width,
-    overflow: "hidden",
+    //overflow: "hidden",
     shadowColor: '#000',
     shadowOpacity: 1,
-    elevation: 1,
+    //elevation: 1,
     backgroundColor: chroma('white').alpha(.85),
     alignItems:"center",
     justifyContent:"center"
   },
   userStatsView:{
     height:'auto',
-    padding: 10,
     width: width,
+    padding: 10,
     backgroundColor: chroma('black').alpha(.025),
   },
   text:{
@@ -934,6 +836,28 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     // padding: 10,
     height: 250,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 1,
+    elevation: 10
+  },
+  settingsContainer: {
+    justifyContent: 'center',
+    alignItems: "center",
+    borderRadius: 10,
+    height: 75,
+    borderWidth: 1,
+    borderColor: chroma("black").alpha(.05),
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 1,
+    elevation: 5
+  },
+  draftContainer: {
+    justifyContent: 'flex-end',
+    borderRadius: 10,
+    // padding: 10,
+    height: 100,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 1,

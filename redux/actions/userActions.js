@@ -6,6 +6,7 @@ import {
     LOADING_UI,
     SET_UNAUTHENTICATED,
     LOADING_USER,
+    CLEAR_GAME_DATA,
     UPDATE_SUBMIT_COUNT,
     UNSUB_SNAPSHOTS,
   } from '../types';
@@ -129,8 +130,9 @@ import {
   
   export const logoutUser = async () => {
     store.dispatch({ type: LOADING_UI })
-    delete axios.defaults.headers.common['Authorization'];
+    store.dispatch({ type: CLEAR_GAME_DATA });
     await firebase.auth().signOut()
+    
     store.dispatch({ type: SET_SNACKBAR, payload: {type: "info", message: "You Have Been Logged Out"}})
   };
       

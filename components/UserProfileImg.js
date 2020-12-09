@@ -48,6 +48,9 @@ export default function UserProfileImg(props) {
   async function uploadImage(uri){
     store.dispatch({type: LOADING_UI})
     var draftPath = store.getState().draft.path;
+    
+    var pollOpen = draft.weeklyPoll.open.toDate();
+    var weekOpen = dateFns.set(weekOpen, {hours: pollOpen.getHours(), minutes: pollOpen.getMinutes(), seconds: pollOpen.getSeconds()})
 
     const response = await fetch(uri);
     const blob = await response.blob();
@@ -62,7 +65,8 @@ export default function UserProfileImg(props) {
     })
     .then(async (obj) => {
       obj.user.ref.update({img: obj.url});
-      return {url: obj.url, data: await firebase.firestore().collection(`${draftPath}/waifuPoll`).get()}
+      return {url: obj.url, data: await firebase.firestore().collection(`${draftPath}/waifus`)
+      .where("appearDate", ">=", firebase.firestore.Timestamp.fromDate(weekOpen)).get()}
     })
     .then((obj) => {
       obj.data.forEach((doc) => {

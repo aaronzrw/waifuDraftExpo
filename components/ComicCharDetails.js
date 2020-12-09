@@ -93,6 +93,15 @@ const styles = StyleSheet.create({
   }
 });
 
+function toTitleCase(str) {
+  return str.replace(
+    /\w\S*/g,
+    function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    }
+  );
+}
+
 const { width, height } = Dimensions.get('window');
 const ComicCharDetails = ({ waifu }) => {
   //Comic Variables
@@ -101,6 +110,7 @@ const ComicCharDetails = ({ waifu }) => {
     //setDetailViewHeight(e.nativeEvent.layout.height)
   }
 
+  var teams = [];
   var aliases = [];
   if(waifu.currentAlias != null){
     aliases.push(waifu.currentAlias)
@@ -109,6 +119,14 @@ const ComicCharDetails = ({ waifu }) => {
   aliases = _.uniq(aliases.concat(waifu.aliases.filter(x => x != waifu.currentAlias && waifu.name)));
 
   var searchItems = getSearchData();
+  switch(waifu.type.toLowerCase()){
+    case "marvel":
+      waifu.type = "Marvel"
+      break;
+    case "dc":
+      waifu.type = "DC"
+      break;
+  }
   var teams = searchItems.views[waifu.type].items.filter(x => waifu.teams.includes(x.name))
   teams = _.orderBy(teams, ["name"], ['asc'])
 
