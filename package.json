@@ -98,7 +98,8 @@
     "redux-watch": "^1.2.0",
     "ruby": "^0.6.1",
     "styled-components": "^5.0.1",
-    "timezone-support": "^2.0.2"
+    "timezone-support": "^2.0.2",
+    "expo-localization": "~8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

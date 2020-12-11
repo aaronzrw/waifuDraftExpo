@@ -24,6 +24,7 @@ import {
   SET_USER_WAIFUS
 } from '../types';
 
+import * as Localization from 'expo-localization';
 import * as firebase from 'firebase';
 import 'firebase/auth';
 
@@ -831,7 +832,7 @@ export async function setRealTimeListeners(userId){
             var messages = [];
             chat.messages.map(message => {
               var msg = _.cloneDeep(message)
-              var decodedMsg = lz.decompressFromUTF16(msg);
+              var decodedMsg = ls.decompressFromUTF16(msg);
               var parsedMsg = JSON.parse(decodedMsg)
               messages.push(parsedMsg)
             });
@@ -923,7 +924,7 @@ export async function setRealTimeListeners(userId){
   });
 
   //call get search data async
-  getSearchDataAsync()
+  getSearchData()
 
   Promise.all([userCredentialsPromise,
     userDraftPromise, otherUserPromise,
@@ -950,7 +951,8 @@ export function getSearchData(){
     var searchItems = store.getState().data.searchItems;
     if(_.isEmpty(searchItems)){
       var compressSearchJson = require('../../assets/SearchFile.json');
-      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      searchItems = JSON.parse(ls.decompressFromBase64(compressSearchJson));
+
       store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
     }
 
@@ -963,22 +965,22 @@ export function getSearchData(){
   }
 }
 
-export async function getSearchDataAsync(){
-  try{
-    var searchItems = store.getState().data.searchItems;
-    if(_.isEmpty(searchItems)){
-      var compressSearchJson = require('../../assets/SearchFile.json');
-      searchItems = JSON.parse(ls.decompress(compressSearchJson));
-      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
-    }
-    return searchItems
-  }
-  catch(ex){
-    console.log(ex)
+// export async function getSearchDataAsync(){
+//   try{
+//     var searchItems = store.getState().data.searchItems;
+//     if(_.isEmpty(searchItems)){
+//       var compressSearchJson = require('../../assets/SearchFile.json');
+//       searchItems = JSON.parse(ls.decompress(compressSearchJson));
+//       store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+//     }
+//     return searchItems
+//   }
+//   catch(ex){
+//     console.log(ex)
 
-    return {}
-  }
-}
+//     return {}
+//   }
+// }
 
 async function buildBossRewardStr(reward){
 
@@ -1106,6 +1108,6 @@ export function getRankColor(rank){
 }
 
 export function getZonedDate(date = new Date()){
-  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  var tz = Localization.timezone;
   return dateFnsTz.convertToTimeZone(date, {timeZone: tz})
 }

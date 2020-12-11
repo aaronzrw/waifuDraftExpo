@@ -187,7 +187,7 @@ export default class ViewChat extends Component {
   }
   
   render(){
-    
+    console.log(_.isEmpty(this.state.chatUsers))
     return (
       <>
         <Swiper
@@ -221,12 +221,16 @@ export default class ViewChat extends Component {
               keyExtractor={item => item.id}
             />
             
-            <FAB
-              color="white"
-              style={styles.nextFab}
-              icon="arrow-right-thick"
-              onPress={this.submitChatUsers}
-            />
+            {
+              !_.isEmpty(this.state.chatUsers) && (
+                <FAB
+                  color="white"
+                  style={styles.nextFab}
+                  icon="arrow-right-thick"
+                  onPress={this.submitChatUsers}
+                />
+              )
+            }
           </View>
         
           <View style={[styles.container, {backgroundColor: chroma('white')}]}>

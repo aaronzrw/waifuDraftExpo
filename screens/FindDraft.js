@@ -1,5 +1,6 @@
 import React, { Component, createRef, forwardRef } from 'react';
 import { Input, Slider } from 'react-native-elements';
+import * as Localization from 'expo-localization';
 import { Text, FAB, TextInput, Button, ActivityIndicator, Searchbar, Switch } from 'react-native-paper';
 import { Animated, Easing, Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighlight, ScrollView,
   Image, ImageBackground, Dimensions, FlatList, Modal, KeyboardAvoidingView } from 'react-native';
@@ -87,7 +88,7 @@ export default class FindDraft extends Component {
           close: dateFns.setMinutes(dateFns.setSeconds(dateFns.endOfDay(new Date()), 0), 0),
           count: 10
         },
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        timeZone: Localization.timezone
       },
       showDailyOpen: false,
       showDailyClose: false,
@@ -616,17 +617,19 @@ export default class FindDraft extends Component {
                             <Button mode={"contained"} color={chroma('aqua').hex()}
                               labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                               style={{ width: '65%' }} 
-                              onPress={() => this.setState({showDailyOpen: true})}>Open</Button>
+                              onPress={() => {
+                                this.setState({showDailyOpen: true}, () => this.setState({showDailyOpen: false}))
+                              }}>Open</Button>
                             
                             {this.state.showDailyOpen ?
                               <DateTimePicker
                                 testID="dailyOpenTime"
                                 value={this.state.draftData.dailyPoll.open}
-                                mode={"time"}
+                                mode="time"
                                 is24Hour={false}
                                 onChange={(event, open) => {
-                                  this.setState({showDailyOpen:false}, () => {
-                                    if(!open){
+                                  this.setState({showWeeklyOpen:false}, () => {
+                                  if(!open){
                                       return
                                     }
 
@@ -649,7 +652,7 @@ export default class FindDraft extends Component {
                             <Button mode={"contained"} color={chroma('aqua').hex()}
                               labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                               style={{ width: '65%' }} 
-                              onPress={() => this.setState({showDailyClose: true})}>Close</Button>
+                              onPress={() => this.setState({showDailyClose: true}, () => this.setState({showDailyClose: Platform.OS === 'ios'}))}>Close</Button>
                             
                             {this.state.showDailyClose && (
                               <DateTimePicker
@@ -720,7 +723,7 @@ export default class FindDraft extends Component {
                             <Button mode={"contained"} color={chroma('aqua').hex()}
                               labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                               style={{ width: '65%' }} 
-                              onPress={() => this.setState({showWeeklyOpen: true})}>Open</Button>
+                              onPress={() => this.setState({showWeeklyOpen: true}, () => this.setState({showWeeklyOpen: Platform.OS === 'ios'}))}>Open</Button>
 
                             {this.state.showWeeklyOpen && (
                               <DateTimePicker
@@ -753,7 +756,7 @@ export default class FindDraft extends Component {
                             <Button mode={"contained"} color={chroma('aqua').hex()}
                               labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                               style={{ width: '65%' }} 
-                              onPress={() => this.setState({showWeeklyClose: true})}>Close</Button>
+                              onPress={() => this.setState({showWeeklyClose: true}, () => this.setState({showWeeklyClose: Platform.OS === 'ios'}))}>Close</Button>
                             
                             {this.state.showWeeklyClose && (
                               <DateTimePicker

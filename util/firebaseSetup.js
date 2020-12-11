@@ -31,8 +31,8 @@ const db = firebase.initializeApp(firebaseConfig).firestore();
 
 // uncomment this to test firestore locally w/ emulator 
 // Uncomment the below line to use cloud functions with the emulator
-firebase.functions().useFunctionsEmulator('http://10.0.2.2:5001')
-  db.settings({
-    host: "10.0.2.2:8080",
-    ssl: false
-  });
+// firebase.functions().useFunctionsEmulator('http://10.0.2.2:5001')
+//   db.settings({
+//     host: "10.0.2.2:8080",
+//     ssl: false
+//   });

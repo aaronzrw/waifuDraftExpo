@@ -17,7 +17,7 @@ import _ from 'lodash';
 import store from '../redux/store';
 const chroma = require('chroma-js')
 
-const HEADER_HEIGHT = 25
+const HEADER_HEIGHT = 35
 const { width, height } = Dimensions.get('window');
 
 
@@ -161,25 +161,24 @@ const UserSettingsBottomSheet = forwardRef(({ animated, drafts }, ref) => {
       <Animated.View
         style={
           {
-            opacity: animated.interpolate({
+            opacity: new Animated.Value(handle).interpolate({
               inputRange: [0, 0.75],
               outputRange: [1, 0],
             }),
-            opacity: handle ? 0 : 1,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10,
+            // position: 'absolute',
+            // top: 0,
+            // left: 0,
+            // right: 0,
+            // zIndex: 10,
             borderTopLeftRadius: 10, borderTopRightRadius: 10,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: chroma('black').alpha(.05),
-            height: 25,
+            height: HEADER_HEIGHT,
           }
         }
       >
-        <Text onPress={() => modalizeRef.current.open('top')} style={{fontSize: 18, textAlign: "center", fontFamily:"Edo"}}>Settings</Text>
+        <Text onPress={() => modalizeRef.current.open('top')} style={{width: width, fontSize: 18, textAlign: "center", fontFamily:"Edo"}}>Settings</Text>
       </Animated.View>
       
       <View style={{ height: 250, width: width, backgroundColor: 'white', padding: 16,
@@ -259,11 +258,12 @@ const UserSettingsBottomSheet = forwardRef(({ animated, drafts }, ref) => {
     <Modalize
       ref={modalizeRef}
       panGestureAnimatedValue={animated}
-      alwaysOpen={25}
+      alwaysOpen={HEADER_HEIGHT}
       snapPoint={HEADER_HEIGHT}
       withHandle={handle}
       adjustToContentHeight={true}
       handlePosition="inside"
+      rootStyle={{elevation: 11}}
       handleStyle={{ top: 13, width: 40, height: handle ? 6 : 0, backgroundColor: '#bcc0c1' }}
       onPositionChange={handlePosition}
       onClosed={() => resetSwiper()}

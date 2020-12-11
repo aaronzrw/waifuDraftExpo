@@ -2,6 +2,7 @@
 import firebase from 'firebase/app'
 import * as dateFns from "date-fns"
 import * as dateFnsTz from "date-fns-timezone"
+import * as Localization from 'expo-localization';
 
 import {
   SET_WEEKLY_POLL,
@@ -46,7 +47,7 @@ import {
           loading: false
         };
       case SET_WEEKLY_POLL:
-        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        var tz = Localization.timezone;
         action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
         
         var poll = state.poll;
@@ -57,7 +58,7 @@ import {
           poll
         }
       case SET_DAILY_POLL:
-        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        var tz = Localization.timezone;
         action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
 
         var poll = state.poll;

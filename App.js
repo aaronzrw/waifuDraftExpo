@@ -130,7 +130,7 @@ export default class App extends Component{
 
     Promise.all([
       Asset.loadAsync([
-        require('./assets/images/TopVote.png'),
+        require('./assets/images/TopVote.png')
       ]),
       Font.loadAsync({
         Edo: require('./assets/fonts/edo.ttf'),

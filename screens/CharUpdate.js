@@ -148,8 +148,6 @@ export default class CharUpdate extends Component {
 
   render(){
     const waifu = this.state.waifu;
-    waifu.rank = 4;
-
     var attackNeeded = 0;
     var defenseNeeded = 0;
     var pointsNeededToRank = 0;

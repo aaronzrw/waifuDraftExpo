@@ -754,6 +754,7 @@ Profile.navigationOptions = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: "relative",
     flexDirection: "column",
     alignItems:"center",
     justifyContent: "center",

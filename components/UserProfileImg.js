@@ -119,7 +119,6 @@ export default function UserProfileImg(props) {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     height: width/2,
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems:"center",
     justifyContent:"center",
     position: 'absolute',
-    zIndex: 1,
+    zIndex: 0,
   },
   cancelFab: {
     position: 'absolute',
