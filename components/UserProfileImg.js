@@ -50,6 +50,9 @@ export default function UserProfileImg(props) {
 <<<<<<< HEAD
 =======
     var draftPath = store.getState().draft.path;
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
     const response = await fetch(uri);
@@ -66,7 +69,11 @@ export default function UserProfileImg(props) {
     .then(async (obj) => {
       obj.user.ref.update({img: obj.url});
 <<<<<<< HEAD
+<<<<<<< HEAD
       return {url: obj.url, data: await firebase.firestore().collection(`waifuPoll`).get()}
+=======
+      return {url: obj.url, data: await firebase.firestore().collection(`${draftPath}/waifuPoll`).get()}
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
       return {url: obj.url, data: await firebase.firestore().collection(`${draftPath}/waifuPoll`).get()}
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.

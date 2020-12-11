@@ -301,6 +301,10 @@ export default class VoteDetails extends Component {
         <ImageBackground blurRadius={.45} style={[styles.imageContainer]} source={{uri: this.state.waifu.img}}>
           <View style={styles.bgView}>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+            <SwipeIndicator horiSwipe={true} />
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
             <SwipeIndicator horiSwipe={true} />
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.

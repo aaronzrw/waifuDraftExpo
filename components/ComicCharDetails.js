@@ -90,10 +90,13 @@ const ComicCharDetails = ({ card }) => {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   const waifuLinkPress = async () => {
     WebBrowser.openBrowserAsync(card.link);
   };
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   var aliases = [];
   if(waifu.currentAlias != null){
     aliases.push(waifu.currentAlias)

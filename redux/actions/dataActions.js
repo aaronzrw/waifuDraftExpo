@@ -135,7 +135,11 @@ export async function submitVote(voteCount, waifu){
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   await firebase.firestore().doc(`waifuPoll/${waifu.waifuId}`).get()
+=======
+  await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
   await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
@@ -355,6 +359,7 @@ export async function updateTrade(trade, status){
 export async function fightBoss(bossFightObj){
   store.dispatch({ type: LOADING_UI })
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   var uid = await firebase.auth().currentUser.uid;
   var waifuRef = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
@@ -364,6 +369,10 @@ export async function fightBoss(bossFightObj){
 =======
   
   var uid = await firebase.auth().currentUser.uid;
+=======
+  
+  var uid = await firebase.auth().currentUser.uid;
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   var waifuRef = (await firebase.firestore().doc(`${draftPath}/waifus/${bossFightObj.waifuId}`).get())
   var waifu = waifuRef.data()
 
@@ -861,8 +870,11 @@ export async function setRealTimeListeners(userId){
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   const draftPromise = new Promise((resolve, reject) => {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     try{

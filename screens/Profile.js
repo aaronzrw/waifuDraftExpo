@@ -1,8 +1,11 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 import { Input, Slider, BottomSheet } from 'react-native-elements';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
@@ -19,6 +22,9 @@ import UserProfileImg from '../components/UserProfileImg'
 import { MaterialIcons } from '@expo/vector-icons';
 =======
 import SwipeIndicator from '../components/SwipeIndicator'
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
 //Firebase
@@ -27,7 +33,10 @@ import 'firebase/auth'
 
 //Media
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 import { Icon } from 'react-native-elements'
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -48,6 +57,9 @@ import watch from 'redux-watch'
 =======
 import watch from 'redux-watch';
 import { getSearchData } from '../redux/actions/dataActions';
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
 import {
@@ -59,7 +71,10 @@ import {
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { getRankColor } from '../redux/actions/dataActions'
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 import { logoutUser } from '../redux/actions/userActions'
@@ -86,6 +101,9 @@ export default class Profile extends Component {
     trades = trades.filter(x => x.from.husbandoId == store.getState().user.creds.userId ||
       x.to.husbandoId == store.getState().user.creds.userId)
 
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     this.state = {
       navigation: props.navigation,
@@ -114,6 +132,9 @@ export default class Profile extends Component {
       showSwitchDraft: false,
       size: {width,height},
       otherDrafts: []
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     };
 
@@ -137,8 +158,11 @@ export default class Profile extends Component {
   }
   
 <<<<<<< HEAD
+<<<<<<< HEAD
   setSubscribes(){
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   async setSubscribes(){
     this.state.goBackFunc(this.state.navigation, false)
 
@@ -168,7 +192,11 @@ export default class Profile extends Component {
       }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
+=======
+      this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
       this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
@@ -337,10 +365,16 @@ export default class Profile extends Component {
 
   async addNewDaily(){
 <<<<<<< HEAD
+<<<<<<< HEAD
     var compressSearchJson = require('../assets/SearchFile.json');
     var searchJson = JSON.parse(ls.decompress(compressSearchJson));
 
     var waifuLinks = await firebase.firestore().collection('waifus').get()
+=======
+    var searchItems = getSearchData();
+
+    var waifuLinks = await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
     var searchItems = getSearchData();
 
@@ -356,7 +390,11 @@ export default class Profile extends Component {
     });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     const characters = searchJson.characters;
+=======
+    const characters = searchItems.characters;
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
     const characters = searchItems.characters;
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
@@ -381,15 +419,21 @@ export default class Profile extends Component {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     await firebase.firestore().collection('waifus').add(newWaifu)
     .then(doc => {
       newWaifu.waifuId = doc.id
       return firebase.firestore().collection('waifuPoll').add(newWaifu);
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).add(newWaifu)
     .then(doc => {
       newWaifu.waifuId = doc.id
       return firebase.firestore().collection(`${this.state.draftSettings.path}/waifuPoll`).add(newWaifu);
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     });
   }
@@ -399,6 +443,7 @@ export default class Profile extends Component {
   }
 
   async addFavoritieSeries(){
+<<<<<<< HEAD
 <<<<<<< HEAD
     // var dailies = await firebase.firestore().collection('waifuPoll').get()
     // dailies.forEach(x => {
@@ -431,15 +476,21 @@ export default class Profile extends Component {
     //   });
     // });
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     var draft = store.getState().draft;
     (await firebase.firestore().collection(`users`).get()).docs.forEach(user => {
       user.ref.update({currentDraftId: "6FDG"})
     })
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   }
   
   recreateWeeklyPoll(){
     console.log("remake")
+<<<<<<< HEAD
 <<<<<<< HEAD
     // firebase.firestore().collection('waifus').where("husbandoId", "==", "Weekly").get()
     // .then(async (docs) => {
@@ -469,10 +520,15 @@ export default class Profile extends Component {
   createWaifuBackUp(){
     firebase.firestore().collection('waifus').get()
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   }
 
   createWaifuBackUp(){
     firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     .then(async (docs) => {
       var waifus = [];
@@ -486,7 +542,11 @@ export default class Profile extends Component {
         delete waifu.docId;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         await firebase.firestore().collection('waifus-bk').doc(id).set(waifu);
+=======
+        await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
         await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
@@ -521,6 +581,9 @@ export default class Profile extends Component {
         var streak = this.state.userInfo.streak || 0;
 
         return doc.ref.update({points: points + draft.deafultPoints, dailyBonusRedeemed: true, streak: streak + 1})
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
       })
       
@@ -570,7 +633,10 @@ export default class Profile extends Component {
 
     trades = activeTrades.concat(completedTrades);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
     var userActions =
       [
@@ -762,6 +828,9 @@ export default class Profile extends Component {
                   actions={userActions}
                   onStateChange={() => this.changeSettingsFabState()}
                 />
+<<<<<<< HEAD
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
               </View>
               <FlatGrid
