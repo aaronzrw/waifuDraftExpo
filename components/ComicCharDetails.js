@@ -89,9 +89,22 @@ const ComicCharDetails = ({ card }) => {
     //setDetailViewHeight(e.nativeEvent.layout.height)
   }
 
+<<<<<<< HEAD
   const waifuLinkPress = async () => {
     WebBrowser.openBrowserAsync(card.link);
   };
+=======
+  var aliases = [];
+  if(waifu.currentAlias != null){
+    aliases.push(waifu.currentAlias)
+  }
+
+  aliases = _.uniq(aliases.concat(waifu.aliases.filter(x => x != waifu.currentAlias && waifu.name)));
+
+  var searchItems = getSearchData();
+  var teams = searchItems.views[waifu.type].items.filter(x => waifu.teams.includes(x.name))
+  teams = _.orderBy(teams, ["name"], ['asc'])
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
   return(
     <View style={styles.container}>

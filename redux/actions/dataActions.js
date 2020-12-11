@@ -134,7 +134,11 @@ export async function submitVote(voteCount, waifu){
     img: store.getState().user.credentials.img
   };
 
+<<<<<<< HEAD
   await firebase.firestore().doc(`waifuPoll/${waifu.waifuId}`).get()
+=======
+  await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   .then(doc => {
     var votes = doc.data().votes;
     var newVoteObj = votes.filter(x => x.husbandoId == voteObj.husbandoId);
@@ -350,12 +354,21 @@ export async function updateTrade(trade, status){
 
 export async function fightBoss(bossFightObj){
   store.dispatch({ type: LOADING_UI })
+<<<<<<< HEAD
 
   var uid = await firebase.auth().currentUser.uid;
   var waifuRef = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
   var waifu = waifuRef.data()
 
   var bossRef = (await firebase.firestore().doc(`gauntlet/${bossFightObj.bossId}`).get())
+=======
+  
+  var uid = await firebase.auth().currentUser.uid;
+  var waifuRef = (await firebase.firestore().doc(`${draftPath}/waifus/${bossFightObj.waifuId}`).get())
+  var waifu = waifuRef.data()
+
+  var bossRef = (await firebase.firestore().doc(`${draftPath}/bosses/${bossFightObj.bossId}`).get())
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   var boss = bossRef.data()
 
   var fights = _.cloneDeep(boss.fights);
@@ -498,6 +511,7 @@ export async function setRealTimeListeners(userId){
       payload: {otherUsers}
     });
   });
+<<<<<<< HEAD
   
   var unSubTrades = firebase.firestore().collection('trades').onSnapshot(async function(data) {
     var trades = [];
@@ -509,6 +523,22 @@ export async function setRealTimeListeners(userId){
         var arr = [];
         data.forEach((doc) => {
           arr.push({...doc.data(), waifuId: doc.id});
+=======
+  const userDraftPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubUserDraft = firebase.firestore().doc(`${draftPath}/users/${userId}`).onSnapshot(async function(doc) {
+        if (!doc.exists) {
+          store.dispatch({
+            type: SET_SNACKBAR,
+            payload: { type: "info", message: "No User" }
+          });
+          return;
+        }
+          
+        store.dispatch({
+          type: SET_USER_CREDENTIALS,
+          payload: {...doc.data()}
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
         });
         
         return arr
@@ -610,12 +640,24 @@ export async function setRealTimeListeners(userId){
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
+<<<<<<< HEAD
   var unSubWeeklyPoll = firebase.firestore().doc("poll/weekly").onSnapshot(function(doc) {
     try{
       var pollObj = {...doc.data(), type: "weekly"};
       store.dispatch({
         type: SET_WEEKLY_POLL,
         payload: pollObj
+=======
+        store.dispatch({ type: SET_WAIFU_LIST, payload: waifus });
+  
+        var userInfo = store.getState().user.creds;
+        var userWaifus = waifus.filter(x => x.husbandoId == userInfo.userId).map(x => x.waifuId);
+  
+        store.dispatch({
+          type: SET_USER_CREDENTIALS,
+          payload: {creds: userInfo, waifus: userWaifus}
+        });
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
       });
     }
     catch(err){
@@ -637,11 +679,92 @@ export async function setRealTimeListeners(userId){
         payload: pollObj
       });
     }
+<<<<<<< HEAD
     catch(err){
       console.log(err);
       store.dispatch({
         type: SET_DAILY_POLL,
         payload: null
+=======
+  });
+  // const weeklyPollPromise = new Promise((resolve, reject) => {
+  //   try{
+  //     var unSubWeeklyPoll = firebase.firestore().doc(`${draftPath}/poll/weekly`).onSnapshot(function(doc) {
+  //       try{
+  //         var pollObj = {...doc.data(), type: "weekly"};
+  //         store.dispatch({
+  //           type: SET_WEEKLY_POLL,
+  //           payload: pollObj
+  //         });
+  //       }
+  //       catch(err){
+  //         console.log(err);
+  //         store.dispatch({
+  //           type: SET_WEEKLY_POLL,
+  //           payload: null
+  //         });
+  //       }
+  //     });
+  //     resolve({name: "unSubWeeklyPoll", func: unSubWeeklyPoll})
+  //   }
+  //   catch(ex){
+  //     console.log(ex)
+  //     reject()
+  //   }
+  // });
+  // const dailyPollPromise = new Promise((resolve, reject) => {
+  //   try{
+  //     var unSubDailyPoll = firebase.firestore().doc(`${draftPath}/poll/daily`).onSnapshot(function(doc) {
+  //       try{
+  //         var pollObj = {...doc.data(), type: "daily"};
+  //         store.dispatch({
+  //           type: SET_DAILY_POLL,
+  //           payload: pollObj
+  //         });
+  //       }
+  //       catch(err){
+  //         console.log(err);
+  //         store.dispatch({
+  //           type: SET_DAILY_POLL,
+  //           payload: null
+  //         });
+  //       }
+  //     });
+  //     resolve({name: "unSubDailyPoll", func: unSubDailyPoll})
+  //   }
+  //   catch(ex){
+  //     console.log(ex)
+  //     reject()
+  //   }
+  // });
+  const bossPromise = new Promise((resolve, reject) => {
+    try{
+      var unSubBosses = firebase.firestore().collection(`${draftPath}/bosses`).onSnapshot(function(querySnapshot) {
+        try{
+          var bosses = [];
+          querySnapshot.forEach(function(doc) {
+            var boss = doc.data();
+            var now = firebase.firestore.Timestamp.now().toDate()
+  
+            if(boss.appearDate.toDate() <= now && now <= boss.leaveDate.toDate()){
+              bosses.push({bossId: doc.id , ...boss});
+            }
+          });
+  
+          bosses = _.orderBy(bosses,['appearDate'], ['asc'])
+          store.dispatch({
+            type: SET_BOSSES,
+            payload: bosses
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_BOSSES,
+            payload: []
+          });
+        }
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
       });
     }
     // store.dispatch({ type: STOP_LOADING_UI });
@@ -711,7 +834,11 @@ export async function setRealTimeListeners(userId){
     store.dispatch({ type: STOP_LOADING_UI });
   });
 
+<<<<<<< HEAD
   var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
+=======
+  const draftPromise = new Promise((resolve, reject) => {
+>>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
     try{
       var items = [];
       querySnapshot.forEach(function(doc) {
