@@ -27,5 +27,15 @@ const rrfProps = {
 //Initialize firebase instance
 firebase.initializeApp(firebaseConfig)
 
+<<<<<<< HEAD
 //Initialize other services on firebase instance
 firebase.firestore() // <- needed if using firestore
+=======
+// uncomment this to test firestore locally w/ emulator 
+// Uncomment the below line to use cloud functions with the emulator
+firebase.functions().useFunctionsEmulator('http://10.0.2.2:5001')
+  db.settings({
+    host: "10.0.2.2:8080",
+    ssl: false
+  });
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues

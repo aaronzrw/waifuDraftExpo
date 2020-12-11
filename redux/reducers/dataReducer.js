@@ -1,5 +1,11 @@
 
 import firebase from 'firebase/app'
+<<<<<<< HEAD
+=======
+import * as dateFns from "date-fns"
+import * as dateFnsTz from "date-fns-timezone"
+
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
 import {
   SET_WEEKLY_POLL,
   SET_DAILY_POLL,
@@ -43,7 +49,13 @@ import {
           loading: false
         };
       case SET_WEEKLY_POLL:
+<<<<<<< HEAD
         action.payload.activeTill = action.payload.activeTill.toDate();
+=======
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
+        
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
         var poll = state.poll;
         poll.weekly = action.payload;
 
@@ -52,7 +64,13 @@ import {
           poll
         }
       case SET_DAILY_POLL:
+<<<<<<< HEAD
         action.payload.activeTill = action.payload.activeTill.toDate();
+=======
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        action.payload.close = dateFnsTz.convertToTimeZone(action.payload.close.toDate(), {timeZone: tz});
+
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
         var poll = state.poll;
         poll.daily = action.payload;
 

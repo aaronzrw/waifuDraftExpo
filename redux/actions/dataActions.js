@@ -770,6 +770,7 @@ export async function setRealTimeListeners(userId){
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
+<<<<<<< HEAD
   var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
     try{
       var bosses = [];
@@ -779,6 +780,31 @@ export async function setRealTimeListeners(userId){
 
         if(boss.appearTime.toDate() <= now && now <= boss.leaveTime.toDate()){
           bosses.push({bossId: doc.id , ...boss});
+=======
+          chats.forEach(chat => {
+            var messages = [];
+            chat.messages.map(message => {
+              var msg = _.cloneDeep(message)
+              var decodedMsg = lz.decompressFromUTF16(msg);
+              var parsedMsg = JSON.parse(decodedMsg)
+              messages.push(parsedMsg)
+            });
+  
+            chat.messages = messages;
+          })
+  
+          store.dispatch({
+            type: SET_CHATS,
+            payload: chats
+          });
+        }
+        catch(err){
+          console.log(err);
+          store.dispatch({
+            type: SET_CHATS,
+            payload: []
+          });
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
         }
       });
 
@@ -857,10 +883,29 @@ export async function setRealTimeListeners(userId){
         payload: []
       });
     }
+<<<<<<< HEAD
+=======
+  });
+
+  //call get search data async
+  getSearchDataAsync()
+
+  Promise.all([userCredentialsPromise,
+    userDraftPromise, otherUserPromise,
+    tradesPromise, waifusPromise,
+    pollWaifusPromise, bossPromise,
+    chatsPromise, bossItemsPromise, draftPromise])
+  .then((values) => {
+    var subscriptions = {}
+    values.forEach(x => {
+      subscriptions[x.name] = x.func
+    })
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
 
     store.dispatch({ type: STOP_LOADING_UI });
   });
 
+<<<<<<< HEAD
   // var searchItems = store.getState().data.searchItems;
   // if(_.isEmpty(searchItems)){
   //   var compressSearchJson = require('../../assets/SearchFile.json');
@@ -880,10 +925,40 @@ export async function setRealTimeListeners(userId){
       unSubGauntlet,
       unSubChats,
       unSubBossItems
+=======
+//some places need to wait for search data instead of calling it async
+export function getSearchData(){
+  try{
+    var searchItems = store.getState().data.searchItems;
+    if(_.isEmpty(searchItems)){
+      var compressSearchJson = require('../../assets/SearchFile.json');
+      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
     }
   })
 }
 
+<<<<<<< HEAD
+=======
+export async function getSearchDataAsync(){
+  try{
+    var searchItems = store.getState().data.searchItems;
+    if(_.isEmpty(searchItems)){
+      var compressSearchJson = require('../../assets/SearchFile.json');
+      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+    }
+    return searchItems
+  }
+  catch(ex){
+    console.log(ex)
+
+    return {}
+  }
+}
+
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
 async function buildBossRewardStr(reward){
   var result = "Boss Defeated! Rewards Gained";
   var rewards = _.keys(reward);
@@ -998,4 +1073,12 @@ export function getRankColor(rank){
 			break;
 	}
 	return rankColor;
+<<<<<<< HEAD
+=======
+}
+
+export function getZonedDate(date = new Date()){
+  var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return dateFnsTz.convertToTimeZone(date, {timeZone: tz})
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
 }

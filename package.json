@@ -88,7 +88,11 @@
     "redux-watch": "^1.1.1",
     "ruby": "^0.6.1",
     "styled-components": "^5.0.1",
+<<<<<<< HEAD
     "expo-notifications": "~0.1.1"
+=======
+    "timezone-support": "^2.0.2"
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

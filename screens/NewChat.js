@@ -184,6 +184,10 @@ export default class ViewChat extends Component {
   }
   
   render(){
+<<<<<<< HEAD
+=======
+    
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
     return (
       <>
         <Swiper
@@ -204,6 +208,7 @@ export default class ViewChat extends Component {
               renderItem={({ item, index }) => <ChatUserRow item={item} index={index} selectUser={this.selectUser} />}
               keyExtractor={item => item.id}
             />
+<<<<<<< HEAD
             {/*
             <FAB
               color="white"
@@ -211,6 +216,9 @@ export default class ViewChat extends Component {
               icon="arrow-left-thick"
               onPress={() => this.handleSlideChange("back")}
             /> */}
+=======
+            
+>>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
             <FAB
               color="white"
               style={styles.nextFab}
