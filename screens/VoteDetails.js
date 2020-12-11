@@ -302,12 +302,15 @@ export default class VoteDetails extends Component {
           <View style={styles.bgView}>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <SwipeIndicator horiSwipe={true} />
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
             <SwipeIndicator horiSwipe={true} />
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
             <Swiper
               index={0}
               showsPagination={false}

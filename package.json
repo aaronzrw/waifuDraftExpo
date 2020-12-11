@@ -89,10 +89,14 @@
     "ruby": "^0.6.1",
     "styled-components": "^5.0.1",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "expo-notifications": "~0.1.1"
 =======
     "timezone-support": "^2.0.2"
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+    "expo-notifications": "~0.1.1"
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

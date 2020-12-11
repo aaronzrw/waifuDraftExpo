@@ -136,6 +136,7 @@ export async function submitVote(voteCount, waifu){
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   await firebase.firestore().doc(`waifuPoll/${waifu.waifuId}`).get()
 =======
   await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
@@ -143,6 +144,9 @@ export async function submitVote(voteCount, waifu){
 =======
   await firebase.firestore().doc(`${draftPath}/waifuPoll/${waifu.waifuId}`).get()
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+  await firebase.firestore().doc(`waifuPoll/${waifu.waifuId}`).get()
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   .then(doc => {
     var votes = doc.data().votes;
     var newVoteObj = votes.filter(x => x.husbandoId == voteObj.husbandoId);
@@ -360,6 +364,7 @@ export async function fightBoss(bossFightObj){
   store.dispatch({ type: LOADING_UI })
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   var uid = await firebase.auth().currentUser.uid;
   var waifuRef = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
@@ -378,6 +383,14 @@ export async function fightBoss(bossFightObj){
 
   var bossRef = (await firebase.firestore().doc(`${draftPath}/bosses/${bossFightObj.bossId}`).get())
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+
+  var uid = await firebase.auth().currentUser.uid;
+  var waifuRef = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
+  var waifu = waifuRef.data()
+
+  var bossRef = (await firebase.firestore().doc(`gauntlet/${bossFightObj.bossId}`).get())
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   var boss = bossRef.data()
 
   var fights = _.cloneDeep(boss.fights);
@@ -465,6 +478,7 @@ export async function setRealTimeListeners(userId){
         type: SET_USER,
         payload: {credentials: user.credentials, waifus: user.waifus}
       });
+<<<<<<< HEAD
 
       // if(oldUser.credentials != null && !_.isEqual(oldUser.credentials, user.credentials)){
       //   store.dispatch({
@@ -481,6 +495,24 @@ export async function setRealTimeListeners(userId){
   var unSubOtherUsers = firebase.firestore().collection('users').onSnapshot(async function(data) {
     var otherUsers = [];
 
+=======
+
+      // if(oldUser.credentials != null && !_.isEqual(oldUser.credentials, user.credentials)){
+      //   store.dispatch({
+      //     type: SET_SNACKBAR,
+      //     payload: { type: "info", message: "User Data Updated" }
+      //   });
+      // }
+    })
+    .catch(err => {
+      console.log(err)
+    });
+  });
+  
+  var unSubOtherUsers = firebase.firestore().collection('users').onSnapshot(async function(data) {
+    var otherUsers = [];
+
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     var waifus = store.getState().data.waifuList;
     if(waifus.length == 0){
       waifus = await firebase.firestore().collection('waifus').get()
@@ -521,6 +553,9 @@ export async function setRealTimeListeners(userId){
     });
   });
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   
   var unSubTrades = firebase.firestore().collection('trades').onSnapshot(async function(data) {
     var trades = [];
@@ -532,6 +567,7 @@ export async function setRealTimeListeners(userId){
         var arr = [];
         data.forEach((doc) => {
           arr.push({...doc.data(), waifuId: doc.id});
+<<<<<<< HEAD
 =======
   const userDraftPromise = new Promise((resolve, reject) => {
     try{
@@ -548,6 +584,8 @@ export async function setRealTimeListeners(userId){
           type: SET_USER_CREDENTIALS,
           payload: {...doc.data()}
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
         });
         
         return arr
@@ -648,6 +686,7 @@ export async function setRealTimeListeners(userId){
     }
     // store.dispatch({ type: STOP_LOADING_UI });
   });
+<<<<<<< HEAD
   
 <<<<<<< HEAD
   var unSubWeeklyPoll = firebase.firestore().doc("poll/weekly").onSnapshot(function(doc) {
@@ -667,6 +706,15 @@ export async function setRealTimeListeners(userId){
           payload: {creds: userInfo, waifus: userWaifus}
         });
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+  
+  var unSubWeeklyPoll = firebase.firestore().doc("poll/weekly").onSnapshot(function(doc) {
+    try{
+      var pollObj = {...doc.data(), type: "weekly"};
+      store.dispatch({
+        type: SET_WEEKLY_POLL,
+        payload: pollObj
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
       });
     }
     catch(err){
@@ -689,11 +737,15 @@ export async function setRealTimeListeners(userId){
       });
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     catch(err){
       console.log(err);
       store.dispatch({
         type: SET_DAILY_POLL,
         payload: null
+<<<<<<< HEAD
 =======
   });
   // const weeklyPollPromise = new Promise((resolve, reject) => {
@@ -774,12 +826,17 @@ export async function setRealTimeListeners(userId){
           });
         }
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
       });
     }
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
     try{
       var bosses = [];
@@ -789,6 +846,7 @@ export async function setRealTimeListeners(userId){
 
         if(boss.appearTime.toDate() <= now && now <= boss.leaveTime.toDate()){
           bosses.push({bossId: doc.id , ...boss});
+<<<<<<< HEAD
 =======
           chats.forEach(chat => {
             var messages = [];
@@ -814,6 +872,8 @@ export async function setRealTimeListeners(userId){
             payload: []
           });
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
         }
       });
 
@@ -871,12 +931,16 @@ export async function setRealTimeListeners(userId){
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
 =======
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
   const draftPromise = new Promise((resolve, reject) => {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+  var unSubBossItems = firebase.firestore().collection("bossItems").onSnapshot(function(querySnapshot) {
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     try{
       var items = [];
       querySnapshot.forEach(function(doc) {
@@ -896,6 +960,7 @@ export async function setRealTimeListeners(userId){
       });
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   });
 
@@ -913,11 +978,16 @@ export async function setRealTimeListeners(userId){
       subscriptions[x.name] = x.func
     })
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 
     store.dispatch({ type: STOP_LOADING_UI });
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   // var searchItems = store.getState().data.searchItems;
   // if(_.isEmpty(searchItems)){
   //   var compressSearchJson = require('../../assets/SearchFile.json');
@@ -937,6 +1007,7 @@ export async function setRealTimeListeners(userId){
       unSubGauntlet,
       unSubChats,
       unSubBossItems
+<<<<<<< HEAD
 =======
 //some places need to wait for search data instead of calling it async
 export function getSearchData(){
@@ -960,14 +1031,10 @@ export async function getSearchDataAsync(){
       var compressSearchJson = require('../../assets/SearchFile.json');
       searchItems = JSON.parse(ls.decompress(compressSearchJson));
       store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems });
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     }
-    return searchItems
-  }
-  catch(ex){
-    console.log(ex)
-
-    return {}
-  }
+  })
 }
 
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
@@ -1086,6 +1153,7 @@ export function getRankColor(rank){
 	}
 	return rankColor;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 }
 
@@ -1093,4 +1161,6 @@ export function getZonedDate(date = new Date()){
   var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return dateFnsTz.convertToTimeZone(date, {timeZone: tz})
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 }

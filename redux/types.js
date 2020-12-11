@@ -1,10 +1,13 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 // Game reducer type
 export const SET_GAME_DATA = 'SET_GAME_DATA'
 export const SET_FIND_GAME = 'SET_FIND_GAME'
 
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 // User reducer types
 export const SET_AUTHENTICATED = 'SET_AUTHENTICATED';
 export const SET_UNAUTHENTICATED = 'SET_UNAUTHENTICATED';

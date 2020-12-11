@@ -28,6 +28,7 @@ const rrfProps = {
 firebase.initializeApp(firebaseConfig)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 //Initialize other services on firebase instance
 firebase.firestore() // <- needed if using firestore
 =======
@@ -39,3 +40,7 @@ firebase.functions().useFunctionsEmulator('http://10.0.2.2:5001')
     ssl: false
   });
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+//Initialize other services on firebase instance
+firebase.firestore() // <- needed if using firestore
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues

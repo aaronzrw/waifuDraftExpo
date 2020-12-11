@@ -185,9 +185,12 @@ export default class ViewChat extends Component {
   
   render(){
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     return (
       <>
         <Swiper
@@ -209,6 +212,9 @@ export default class ViewChat extends Component {
               keyExtractor={item => item.id}
             />
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
             {/*
             <FAB
               color="white"
@@ -216,9 +222,12 @@ export default class ViewChat extends Component {
               icon="arrow-left-thick"
               onPress={() => this.handleSlideChange("back")}
             /> */}
+<<<<<<< HEAD
 =======
             
 >>>>>>> parent of 42883b1... add more optimized compressed search file,fix timezone issues
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
             <FAB
               color="white"
               style={styles.nextFab}

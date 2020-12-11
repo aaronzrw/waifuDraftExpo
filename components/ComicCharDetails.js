@@ -91,6 +91,7 @@ const ComicCharDetails = ({ card }) => {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   const waifuLinkPress = async () => {
     WebBrowser.openBrowserAsync(card.link);
   };
@@ -109,6 +110,12 @@ const ComicCharDetails = ({ card }) => {
   teams = _.orderBy(teams, ["name"], ['asc'])
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 
+=======
+  const waifuLinkPress = async () => {
+    WebBrowser.openBrowserAsync(card.link);
+  };
+
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   return(
     <View style={styles.container}>
       {/* <Swiper

@@ -1,6 +1,7 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
 =======
@@ -11,6 +12,10 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBa
 import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
 
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
+import { Text, Portal, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
@@ -19,6 +24,7 @@ import Swiper from 'react-native-swiper'
 
 import UserProfileImg from '../components/UserProfileImg'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { MaterialIcons } from '@expo/vector-icons';
 =======
 import SwipeIndicator from '../components/SwipeIndicator'
@@ -26,12 +32,16 @@ import SwipeIndicator from '../components/SwipeIndicator'
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+import { MaterialIcons } from '@expo/vector-icons';
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 
 //Firebase
 import firebase, { firestore } from 'firebase/app'
 import 'firebase/auth'
 
 //Media
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -41,6 +51,8 @@ import { Icon } from 'react-native-elements'
 import { MaterialIcons } from '@expo/vector-icons';
 
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
 import ChestOpen from '../assets/images/ChestOpen.gif'
@@ -53,6 +65,7 @@ import dcIcon from '../assets/images/DCLogo.png'
 //Redux
 import store from '../redux/store';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import watch from 'redux-watch'
 =======
 import watch from 'redux-watch';
@@ -61,6 +74,9 @@ import { getSearchData } from '../redux/actions/dataActions';
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+import watch from 'redux-watch'
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 
 import {
   LOADING_UI,
@@ -72,11 +88,15 @@ import {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { getRankColor } from '../redux/actions/dataActions'
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+import { getRankColor } from '../redux/actions/dataActions'
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 import { logoutUser } from '../redux/actions/userActions'
 
 //Component
@@ -94,6 +114,7 @@ export default class Profile extends Component {
     this.emailVal = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     var trades = _.cloneDeep(store.getState().data.trades);
 <<<<<<< HEAD
+<<<<<<< HEAD
     trades = trades.filter(x => x.from.husbandoId == store.getState().user.credentials.userId ||
       x.to.husbandoId == store.getState().user.credentials.userId)
       
@@ -105,6 +126,11 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    trades = trades.filter(x => x.from.husbandoId == store.getState().user.credentials.userId ||
+      x.to.husbandoId == store.getState().user.credentials.userId)
+      
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     this.state = {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
@@ -126,6 +152,7 @@ export default class Profile extends Component {
       chestOpen: false,
       waifuType: "All",
 <<<<<<< HEAD
+<<<<<<< HEAD
       size: {width,height}
 =======
       dailyBonusRedeemed: true,
@@ -136,6 +163,9 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+      size: {width,height}
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     };
 
     this.selectWaifu = this.selectWaifu.bind(this)
@@ -159,6 +189,7 @@ export default class Profile extends Component {
   
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   setSubscribes(){
 =======
 =======
@@ -167,6 +198,9 @@ export default class Profile extends Component {
     this.state.goBackFunc(this.state.navigation, false)
 
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+  setSubscribes(){
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     let dataReducerWatch = watch(store.getState, 'data')
     let userReducerWatch = watch(store.getState, 'user')
 
@@ -193,6 +227,7 @@ export default class Profile extends Component {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
 =======
       this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
@@ -200,10 +235,14 @@ export default class Profile extends Component {
 =======
       this.setState({userInfo: newVal.creds, waifus: newVal.waifus, selectedWaifu, users, dailyBonusRedeemed: newVal.creds.dailyBonusRedeemed })
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+      this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
     trades = trades.filter(x => x.from.husbandoId == this.state.userInfo.userId || x.to.husbandoId == this.state.userInfo.userId)
+<<<<<<< HEAD
 <<<<<<< HEAD
     var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
 =======
@@ -227,6 +266,9 @@ export default class Profile extends Component {
       })      
     });
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
 
     this.setState({
       users,
@@ -366,6 +408,7 @@ export default class Profile extends Component {
   async addNewDaily(){
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     var compressSearchJson = require('../assets/SearchFile.json');
     var searchJson = JSON.parse(ls.decompress(compressSearchJson));
 
@@ -380,6 +423,12 @@ export default class Profile extends Component {
 
     var waifuLinks = await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus`).get()
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    var compressSearchJson = require('../assets/SearchFile.json');
+    var searchJson = JSON.parse(ls.decompress(compressSearchJson));
+
+    var waifuLinks = await firebase.firestore().collection('waifus').get()
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     .then((docs) => {
       var links = []
       docs.forEach(x => {
@@ -391,6 +440,7 @@ export default class Profile extends Component {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     const characters = searchJson.characters;
 =======
     const characters = searchItems.characters;
@@ -398,6 +448,9 @@ export default class Profile extends Component {
 =======
     const characters = searchItems.characters;
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    const characters = searchJson.characters;
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
     characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
     characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
@@ -420,6 +473,7 @@ export default class Profile extends Component {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     await firebase.firestore().collection('waifus').add(newWaifu)
     .then(doc => {
       newWaifu.waifuId = doc.id
@@ -435,6 +489,12 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    await firebase.firestore().collection('waifus').add(newWaifu)
+    .then(doc => {
+      newWaifu.waifuId = doc.id
+      return firebase.firestore().collection('waifuPoll').add(newWaifu);
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     });
   }
 
@@ -445,6 +505,9 @@ export default class Profile extends Component {
   async addFavoritieSeries(){
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     // var dailies = await firebase.firestore().collection('waifuPoll').get()
     // dailies.forEach(x => {
     //   console.log(`Setting ${x.data().name}`)
@@ -469,6 +532,7 @@ export default class Profile extends Component {
       // waifu.waifuId = x.ref.id;
       // waifu.votes = [];
       // firebase.firestore().collection('waifuPoll').add(waifu)
+<<<<<<< HEAD
     })
     // .then(async (userDocs) => {
     //   userDocs.forEach(x => {
@@ -486,12 +550,23 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+    })
+    // .then(async (userDocs) => {
+    //   userDocs.forEach(x => {
+    //     x.ref.update({ favoriteSeries: [] })
+    //   });
+    // });
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
   }
   
   recreateWeeklyPoll(){
     console.log("remake")
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     // firebase.firestore().collection('waifus').where("husbandoId", "==", "Weekly").get()
     // .then(async (docs) => {
     //   docs.forEach(async x => {
@@ -515,6 +590,7 @@ export default class Profile extends Component {
     //     }
       // });
     // })
+<<<<<<< HEAD
   }
 
   createWaifuBackUp(){
@@ -530,6 +606,12 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+  }
+
+  createWaifuBackUp(){
+    firebase.firestore().collection('waifus').get()
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     .then(async (docs) => {
       var waifus = [];
       docs.forEach(x => {
@@ -543,6 +625,7 @@ export default class Profile extends Component {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         await firebase.firestore().collection('waifus-bk').doc(id).set(waifu);
 =======
         await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
@@ -550,6 +633,9 @@ export default class Profile extends Component {
 =======
         await firebase.firestore().collection(`${this.state.draftSettings.path}/waifus-bk`).doc(id).set(waifu);
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+        await firebase.firestore().collection('waifus-bk').doc(id).set(waifu);
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
       })
     })
   }
@@ -576,6 +662,7 @@ export default class Profile extends Component {
         var points = doc.data().points;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         return doc.ref.update({points: points + 5, dailyBonusRedeemed: true, streak: 0})
 =======
         var streak = this.state.userInfo.streak || 0;
@@ -585,6 +672,9 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+        return doc.ref.update({points: points + 5, dailyBonusRedeemed: true, streak: 0})
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
       })
       
       setTimeout(function(){
@@ -634,6 +724,7 @@ export default class Profile extends Component {
     trades = activeTrades.concat(completedTrades);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
@@ -674,12 +765,17 @@ export default class Profile extends Component {
     }
 
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
     return (
       <>
         {this.state.loading ?
           <></>
         :
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
           <Swiper
             index={0}
             showsPagination={false}
@@ -693,6 +789,7 @@ export default class Profile extends Component {
                     <Text style={[styles.text]}>{this.state.userInfo.userName}</Text>
                     <MaterialIcons name="edit" size={24} color="black" />
                   </TouchableOpacity>
+<<<<<<< HEAD
 =======
           <>
             <SwipeIndicator horiSwipe={true} tintColor={"black"}/>
@@ -721,6 +818,8 @@ export default class Profile extends Component {
                     </TouchableOpacity>
                   </View>
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
                   
                   <TouchableOpacity activeOpacity={.25} onPress={() => this.setState({ showEmailUpdate: true })} style={{flex: 1, flexDirection:"row", justifyContent:"center", alignItems:"center"}}>
                     <Text style={[styles.text, {fontSize: 20}]}>{this.state.userInfo.email}</Text>
@@ -732,6 +831,7 @@ export default class Profile extends Component {
                     <MaterialIcons name="edit" size={24} color="black"/>
                   </TouchableOpacity>
                 </View>
+<<<<<<< HEAD
                 
                 <View style={[styles.userStatsView]}>
                   <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
@@ -832,6 +932,15 @@ export default class Profile extends Component {
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
 =======
 >>>>>>> parent of 167f5e0... add switch draft feature and update boss fight screen.
+=======
+                
+                <View style={[styles.userStatsView]}>
+                  <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
+                  <Text style={[styles.text]}>Rank Coins - {this.state.userInfo.rankCoins}</Text>
+                  <Text style={[styles.text]}>Stat Coins - {this.state.userInfo.statCoins}</Text>
+                  {/* <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text> */}
+                </View>
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
               </View>
               <FlatGrid
                 itemDimension={200}
@@ -863,6 +972,99 @@ export default class Profile extends Component {
                         : <></>
                       }
 
+<<<<<<< HEAD
+=======
+              {!this.state.userInfo.dailyBonusRedeemed && !this.state.chestOpen ?
+                <TouchableOpacity activeOpacity={.5} onPress={() => this.checkDailyBonus()}
+                  style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                  <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
+                </TouchableOpacity>
+              :<></>}
+
+              {
+                this.state.chestOpen ?
+                  <TouchableOpacity style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                    <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
+                  </TouchableOpacity>
+                :<></>
+              }
+
+              <View style={{height: 50, width: width}}>
+                <Button
+                  mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                  onPress={logoutUser}
+                >
+                  LogOut
+                </Button>
+              </View>
+              
+              {
+                this.state.userInfo.isAdmin ?
+                  <View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.addNewDaily}
+                      >
+                        Add New Daily
+                      </Button>
+                    </View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.addFavoritieSeries}
+                      >
+                        Add Favorite Series
+                      </Button>
+                    </View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.createWaifuBackUp}
+                      >
+                        Create Waifu BackUp
+                      </Button>
+                    </View>
+                  </View>
+                : <></>
+              }
+            </View>
+
+            <View style={styles.waifuListView}>
+              <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
+                <Text style={styles.text}>TRADES</Text>
+              </View>
+              <FlatGrid
+                itemDimension={200}
+                items={_.cloneDeep(this.state.trades.filter(x => x.status == "Active")).concat(_.cloneDeep(this.state.trades.filter(x => x.status != "Active")))}
+                style={styles.gridView}
+                // staticDimension={300}
+                // fixed
+                spacing={20}
+                renderItem={({item, index}) => {
+                  const users = this.state.users;
+                  const fromUser = users.filter(x => x.userId == item.from.husbandoId)[0];
+                  const toUser = users.filter(x => x.userId == item.to.husbandoId)[0];
+
+                  return(
+                    <TouchableOpacity activeOpacity={.25}
+                      onPress={() => this.selectTrade(item)} 
+                      style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
+                    >
+                      {
+                        item.status != "Active" ?
+                        <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, elevation: 15, justifyContent:"center", alignItems:"center"}}>
+                          <Text style={[styles.text, 
+                          {
+                            fontSize:50, 
+                            color: item.status == "Accepted" ? chroma("green").brighten() :
+                              chroma('red').brighten()
+                          }]}>{item.status}</Text>
+                        </View>
+                        : <></>
+                      }
+
+>>>>>>> parent of f4d0e1b... Update app to handle multiple drafts and fix some usability issues
                       <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
                         <View style={{flex: 1}}>
                           <Text style={[styles.text]}>From</Text>
@@ -997,26 +1199,6 @@ export default class Profile extends Component {
             </View>
           </Swiper>
         }
-
-        {/* <BottomSheet isVisible={this.state.showSwitchDraft} modalProps={tra}>
-          <FlatGrid
-            itemDimension={50}
-            items={this.state.otherDrafts}
-            style={styles.gridView}
-            // staticDimension={300}
-            // fixed
-            spacing={20}
-            renderItem={({item, index}) => {
-              console.log(item)
-              return(
-                <TouchableOpacity activeOpacity={.25}
-                  style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
-                >
-                </TouchableOpacity>
-              )
-            }}
-          />
-        </BottomSheet> */}
 
         {/* Update User Info Modal */}
         <Modal
